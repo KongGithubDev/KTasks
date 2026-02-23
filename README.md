@@ -1,6 +1,8 @@
-# KTasks
+# <img src="public/logo.png" width="40" height="40" align="center" style="border-radius: 8px;" /> KTasks
 
-A clean, high-performance task manager with a focus on aesthetics and smooth interactions. built using React (Vite) and MongoDB Atlas.
+A clean, high-performance task manager with a focus on aesthetics and smooth interactions, built using React (Vite) and MongoDB Atlas.
+
+![KTasks Preview](preview.png)
 
 ## How it works
 
