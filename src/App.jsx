@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
     CheckCircle2,
     Menu,
@@ -24,6 +24,7 @@ function App() {
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024)
     const [newTaskTitle, setNewTaskTitle] = useState('')
     const [selectedTaskId, setSelectedTaskId] = useState(null)
+    const taskInputRef = useRef(null)
 
     useEffect(() => {
         const handleResize = () => {
@@ -328,6 +329,7 @@ function App() {
                         <div className="add-task-box">
                             <Plus size={24} color="var(--primary)" strokeWidth={3} />
                             <input
+                                ref={taskInputRef}
                                 type="text"
                                 placeholder="Add a task"
                                 value={newTaskTitle}
@@ -399,7 +401,7 @@ function App() {
                                     </motion.div>
                                     <h3>Your plate is clear</h3>
                                     <p>Enjoy the peace, or start something new.</p>
-                                    <button className="create-first-btn" onClick={() => {/* Focus add task */ }}>
+                                    <button className="create-first-btn" onClick={() => taskInputRef.current?.focus()}>
                                         Create your first task
                                     </button>
                                 </div>
