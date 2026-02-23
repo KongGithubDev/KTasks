@@ -401,7 +401,10 @@ function App() {
                                     </motion.div>
                                     <h3>Your plate is clear</h3>
                                     <p>Enjoy the peace, or start something new.</p>
-                                    <button className="create-first-btn" onClick={() => taskInputRef.current?.focus()}>
+                                    <button className="create-first-btn" onClick={() => {
+                                        taskInputRef.current?.focus();
+                                        taskInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }}>
                                         Create your first task
                                     </button>
                                 </div>

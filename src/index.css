@@ -652,8 +652,10 @@ h6 {
 }
 
 .check-btn {
-    background: transparent;
-    border: none;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
     padding: 0;
     cursor: pointer;
     display: flex;
@@ -661,6 +663,8 @@ h6 {
     justify-content: center;
     border-radius: 50%;
     transition: transform 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .check-btn:hover {
@@ -1082,4 +1086,119 @@ textarea:focus {
 
 [data-theme='dark'] textarea {
     background: rgba(255, 255, 255, 0.03);
+}
+
+/* Responsiveness */
+
+/* Tablet (1024px and below) */
+@media (max-width: 1024px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        width: 280px;
+        box-shadow: var(--shadow-xl);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        padding-left: 0 !important;
+        width: 100% !important;
+    }
+
+    .detail-panel {
+        width: 400px;
+        z-index: 1010;
+    }
+
+    .login-card {
+        width: 90% !important;
+        max-width: 440px;
+        padding: 40px 24px;
+    }
+}
+
+/* Mobile (768px and below) */
+@media (max-width: 768px) {
+    .main-header {
+        padding: 16px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        height: auto;
+    }
+
+    .header-right {
+        justify-content: space-between;
+        width: 100%;
+        gap: 12px;
+    }
+
+    .search-bar-wrapper {
+        width: 100%;
+        flex: 1;
+    }
+
+    .task-list-container {
+        padding: 0 16px 24px;
+    }
+
+    .detail-panel {
+        width: 100% !important;
+        max-width: none !important;
+        padding: 24px;
+    }
+
+    .login-header h1 {
+        font-size: 2.5rem;
+    }
+}
+
+/* Small Phones (480px and below) */
+@media (max-width: 480px) {
+    .nav-section header {
+        padding: 0 16px 8px;
+    }
+
+    .nav-item {
+        padding: 12px 16px;
+    }
+
+    .task-item {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .task-title {
+        font-size: 0.95rem;
+    }
+
+    .user-info span {
+        display: none;
+    }
+
+    .theme-toggle-btn span {
+        display: none;
+    }
+
+    .theme-toggle-btn {
+        padding: 8px;
+    }
+
+    .login-card {
+        padding: 32px 20px;
+    }
+
+    .login-header h1 {
+        font-size: 2rem;
+    }
+
+    .logo span {
+        font-size: 1.25rem;
+    }
 }
