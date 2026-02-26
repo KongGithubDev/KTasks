@@ -128,7 +128,6 @@ export const TaskProvider = ({ children }) => {
     };
 
     const deleteList = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this list and all its tasks?')) return;
         try {
             await axios.delete(`${API_URL}/lists/${id}`);
             const newLists = lists.filter(l => String(l._id) !== String(id));
