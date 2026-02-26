@@ -15,7 +15,8 @@ import {
     Columns,
     List as ListIcon,
     Lock,
-    Link
+    Link,
+    Trash2
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTasks } from './context/TaskContext'
