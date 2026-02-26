@@ -18,11 +18,15 @@ import {
     Square,
     Sparkles,
     Folder,
-    FolderOpen
+    FolderOpen,
+    Copy
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTasks } from './context/TaskContext'
 import { GoogleLogin } from '@react-oauth/google'
+import axios from 'axios'
+
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 import { Toaster, toast } from 'react-hot-toast'
 
 function App() {
@@ -162,7 +166,7 @@ function App() {
             }
 
             // Trigger global refresh to pull in newly assigned values
-            fetchTasks();
+            window.location.reload();
             toast.success("Template Loaded!");
             setShowTemplates(false);
         } catch (err) {
