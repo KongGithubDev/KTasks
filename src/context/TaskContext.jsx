@@ -68,21 +68,21 @@ export const TaskProvider = ({ children }) => {
     };
 
     const fetchTasks = async (listId) => {
-        if (listId === 'important' || listId === 'planned') {
-            // For global views, we might need a different endpoint or filter locally
-            // For now, let's fetch all tasks or handle it smartly
-            return;
-        }
         try {
-            const res = await axios.get(`${API_URL}/tasks/${listId}`);
-            setTasks(res.data);
+            if (listId === 'important' || listId === 'planned' || listId === 'today') {
+                const res = await axios.get(`${API_URL}/tasks`);
+                setTasks(res.data);
+            } else {
+                const res = await axios.get(`${API_URL}/tasks/${listId}`);
+                setTasks(res.data);
+            }
         } catch (err) {
             console.error(err);
         }
     };
 
     useEffect(() => {
-        if (activeListId && activeListId !== 'important' && activeListId !== 'planned') {
+        if (activeListId) {
             fetchTasks(activeListId);
         }
     }, [activeListId]);
@@ -209,6 +209,15 @@ export const TaskProvider = ({ children }) => {
         }
     };
 
+    const updateTaskState = async (taskId, updates) => {
+        try {
+            const res = await axios.patch(`${API_URL}/tasks/${taskId}`, updates);
+            setTasks(tasks.map(t => t._id === taskId ? res.data : t));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const addSubtask = async (taskId, title) => {
         const task = tasks.find(t => t._id === taskId);
         const newSubtasks = [...(task.subtasks || []), { title, completed: false }];
@@ -238,14 +247,21 @@ export const TaskProvider = ({ children }) => {
         ? tasks.filter(t => t.important)
         : activeListId === 'planned'
             ? tasks.filter(t => t.dueDate)
-            : tasks;
+            : activeListId === 'today'
+                ? tasks.filter(t => {
+                    if (!t.dueDate) return false;
+                    const today = new Date();
+                    const taskDate = new Date(t.dueDate);
+                    return taskDate.toDateString() === today.toDateString();
+                })
+                : tasks.filter(t => t.listId === activeListId || !t.listId);
 
     return (
         <TaskContext.Provider value={{
             user, token, lists, activeListId, setActiveListId,
             addTask, toggleTask, toggleImportant, deleteTask,
             activeTasks, addSubtask, toggleSubtask, setPriority,
-            updateNote, addList, updateList, deleteList, loginWithGoogle, logout, loading, authLoading
+            updateNote, updateTaskState, addList, updateList, deleteList, loginWithGoogle, logout, loading, authLoading
         }}>
             {children}
         </TaskContext.Provider>

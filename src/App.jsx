@@ -11,7 +11,8 @@ import {
     User,
     Trash2,
     Circle,
-    LogOut
+    LogOut,
+    Sun
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTasks } from './context/TaskContext'
@@ -45,6 +46,7 @@ function App() {
     const [editingListId, setEditingListId] = useState(null)
     const [editListTitle, setEditListTitle] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
+    const [sortBy, setSortBy] = useState('date_desc')
 
     const {
         user,
@@ -67,7 +69,8 @@ function App() {
         loginWithGoogle,
         logout,
         loading,
-        authLoading
+        authLoading,
+        updateTaskState
     } = useTasks()
 
     useEffect(() => {
@@ -107,6 +110,17 @@ function App() {
         t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (t.note && t.note.toLowerCase().includes(searchQuery.toLowerCase()))
     )
+
+    const sortedFilteredTasks = [...filteredTasks].sort((a, b) => {
+        if (sortBy === 'priority') {
+            const p = { high: 3, medium: 2, low: 1 };
+            return (p[b.priority] || 0) - (p[a.priority] || 0);
+        } else if (sortBy === 'alphabetical') {
+            return a.title.localeCompare(b.title);
+        } else {
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        }
+    });
 
     const handleAddSubtask = (e) => {
         if (e.key === 'Enter' && selectedTaskId) {
@@ -177,6 +191,7 @@ function App() {
 
                 <nav className="sidebar-nav">
                     <NavItem icon={<Star size={22} />} label="Important" active={activeListId === 'important'} onClick={() => setActiveListId('important')} />
+                    <NavItem icon={<Sun size={22} />} label="Today" active={activeListId === 'today'} onClick={() => setActiveListId('today')} />
                     <NavItem icon={<Calendar size={22} />} label="Planned" active={activeListId === 'planned'} onClick={() => setActiveListId('planned')} />
 
                     <div className="nav-divider"></div>
@@ -296,6 +311,16 @@ function App() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
+                        <select
+                            className="theme-toggle-btn glass"
+                            style={{ padding: '8px 12px', border: 'none', borderRadius: '20px', appearance: 'none', cursor: 'pointer', outline: 'none' }}
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                        >
+                            <option value="date_desc">Newest First</option>
+                            <option value="priority">Priority</option>
+                            <option value="alphabetical">A-Z</option>
+                        </select>
                         <button className="theme-toggle-btn glass" onClick={toggleTheme}>
                             {theme === 'light' ? (
                                 <>
@@ -341,8 +366,8 @@ function App() {
 
                     <div className="task-items-list">
                         <AnimatePresence mode="popLayout">
-                            {filteredTasks.length > 0 ? (
-                                filteredTasks.map(task => (
+                            {sortedFilteredTasks.length > 0 ? (
+                                sortedFilteredTasks.map(task => (
                                     <motion.div
                                         layout
                                         initial={{ opacity: 0, scale: 0.98 }}
@@ -371,6 +396,22 @@ function App() {
                                             </div>
                                             <div className="task-meta">
                                                 {task.note && <span className="task-note">{task.note.substring(0, 60)}{task.note.length > 60 ? '...' : ''}</span>}
+                                                {task.dueDate && (
+                                                    <span className="task-date" style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>
+                                                        <Calendar size={12} />
+                                                        {new Date(task.dueDate).toLocaleDateString()} {task.dueTime || ''}
+                                                    </span>
+                                                )}
+                                                {task.recurrence && task.recurrence !== 'none' && (
+                                                    <span title={`Repeats ${task.recurrence}`} style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center' }}>
+                                                        🔁
+                                                    </span>
+                                                )}
+                                                {task.tags?.length > 0 && (
+                                                    <div className="task-tags" style={{ display: 'flex', gap: '4px', marginLeft: '4px' }}>
+                                                        {task.tags.map(t => <span key={t} style={{ fontSize: '0.7rem', background: 'var(--primary-light)', color: 'var(--primary)', padding: '2px 6px', borderRadius: '10px' }}>#{t}</span>)}
+                                                    </div>
+                                                )}
                                                 {task.subtasks?.length > 0 && (
                                                     <span className="subtask-count">
                                                         <span className="dot"></span>
@@ -426,8 +467,71 @@ function App() {
                         <div className="detail-section">
                             <input
                                 className="editable-title"
-                                value={selectedTask.title}
-                                onChange={(e) => {/* Implement title edit */ }}
+                                value={selectedTask.title || ""}
+                                onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { title: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="detail-section">
+                            <label><Calendar size={16} /> Due Date & Time</label>
+                            <div className="date-time-inputs" style={{ display: 'flex', gap: '10px' }}>
+                                <input
+                                    type="date"
+                                    value={selectedTask.dueDate ? new Date(selectedTask.dueDate).toISOString().split('T')[0] : ''}
+                                    onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { dueDate: e.target.value })}
+                                    style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
+                                />
+                                <input
+                                    type="time"
+                                    value={selectedTask.dueTime || ''}
+                                    onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { dueTime: e.target.value })}
+                                    style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="detail-section">
+                            <label><Calendar size={16} /> Recurrence</label>
+                            <select
+                                value={selectedTask.recurrence || 'none'}
+                                onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { recurrence: e.target.value })}
+                                style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
+                            >
+                                <option value="none">Does not repeat</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+
+                        <div className="detail-section">
+                            <label>Tags</label>
+                            <div className="tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                                {(selectedTask.tags || []).map(tag => (
+                                    <span key={tag} style={{ background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        #{tag}
+                                        <button onClick={() => {
+                                            const newTags = (selectedTask.tags || []).filter(t => t !== tag);
+                                            updateTaskState(selectedTask._id || selectedTask.id, { tags: newTags });
+                                        }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: '12px', padding: 0 }}>&times;</button>
+                                    </span>
+                                ))}
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Add tag and press Enter"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && e.target.value.trim() !== '') {
+                                        const t = e.target.value.trim();
+                                        if (!(selectedTask.tags || []).includes(t)) {
+                                            const newTags = [...(selectedTask.tags || []), t];
+                                            updateTaskState(selectedTask._id || selectedTask.id, { tags: newTags });
+                                        }
+                                        e.target.value = '';
+                                    }
+                                }}
+                                style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
                             />
                         </div>
 

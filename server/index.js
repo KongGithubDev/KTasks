@@ -99,11 +99,13 @@ app.get('/api/lists', authenticateToken, async (req, res) => {
 
 app.post('/api/lists', authenticateToken, async (req, res) => {
     try {
-        const { name, icon } = req.body;
+        const { name, icon, color, defaultView } = req.body;
         const list = await List.create({
             userId: req.user.id,
             name,
-            icon: icon || 'List'
+            icon: icon || 'List',
+            color: color || '',
+            defaultView: defaultView || 'list'
         });
         res.status(201).json(list);
     } catch (err) {
@@ -113,10 +115,15 @@ app.post('/api/lists', authenticateToken, async (req, res) => {
 
 app.patch('/api/lists/:id', authenticateToken, async (req, res) => {
     try {
-        const { name, icon } = req.body;
+        const { name, icon, color, defaultView } = req.body;
         const list = await List.findOneAndUpdate(
             { _id: req.params.id, userId: req.user.id },
-            { name, icon: icon || 'List' },
+            {
+                name,
+                icon: icon || 'List',
+                color: color || '',
+                defaultView: defaultView || 'list'
+            },
             { new: true }
         );
         if (!list) return res.status(404).json({ message: 'List not found or unauthorized' });
@@ -140,6 +147,15 @@ app.delete('/api/lists/:id', authenticateToken, async (req, res) => {
 
 // --- TASK ROUTES ---
 
+app.get('/api/tasks', authenticateToken, async (req, res) => {
+    try {
+        const tasks = await Task.find({ userId: req.user.id });
+        res.json(tasks);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 app.get('/api/tasks/:listId', authenticateToken, async (req, res) => {
     try {
         const tasks = await Task.find({ userId: req.user.id, listId: req.params.listId });
@@ -151,7 +167,11 @@ app.get('/api/tasks/:listId', authenticateToken, async (req, res) => {
 
 app.post('/api/tasks', authenticateToken, async (req, res) => {
     try {
-        const { listId, title, note, important, priority } = req.body;
+        const {
+            listId, title, note, important, priority,
+            dueDate, dueTime, tags, recurrence, attachments, status, blockedBy, location
+        } = req.body;
+
         const task = await Task.create({
             userId: req.user.id,
             listId,
@@ -159,6 +179,14 @@ app.post('/api/tasks', authenticateToken, async (req, res) => {
             note: note || '',
             important: !!important,
             priority: priority || 'low',
+            dueDate,
+            dueTime,
+            tags: tags || [],
+            recurrence: recurrence || 'none',
+            attachments: attachments || [],
+            status: status || 'todo',
+            blockedBy: blockedBy || [],
+            location,
             subtasks: []
         });
         res.status(201).json(task);
