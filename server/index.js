@@ -86,6 +86,23 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
     }
 });
 
+app.patch('/api/auth/me', authenticateToken, async (req, res) => {
+    try {
+        const { xp, level, badges } = req.body;
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        if (xp !== undefined) user.xp = xp;
+        if (level !== undefined) user.level = level;
+        if (badges !== undefined) user.badges = badges;
+
+        await user.save();
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // --- LIST ROUTES ---
 
 app.get('/api/lists', authenticateToken, async (req, res) => {

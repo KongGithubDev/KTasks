@@ -67,6 +67,15 @@ export const TaskProvider = ({ children }) => {
         }
     };
 
+    // Listen for Gamification Updates
+    useEffect(() => {
+        const handleUserUpdate = (e) => {
+            setUser(e.detail);
+        };
+        window.addEventListener('user-updated', handleUserUpdate);
+        return () => window.removeEventListener('user-updated', handleUserUpdate);
+    }, []);
+
     const fetchTasks = async (listId) => {
         try {
             if (listId === 'important' || listId === 'planned' || listId === 'today') {
@@ -162,8 +171,32 @@ export const TaskProvider = ({ children }) => {
     const toggleTask = async (taskId) => {
         const task = tasks.find(t => t._id === taskId);
         try {
-            const res = await axios.patch(`${API_URL}/tasks/${taskId}`, { completed: !task.completed });
+            const isCompleting = !task.completed;
+            const res = await axios.patch(`${API_URL}/tasks/${taskId}`, { completed: isCompleting });
             setTasks(tasks.map(t => t._id === taskId ? res.data : t));
+
+            // Gamification XP Logic
+            if (isCompleting && user) {
+                const xpGain = task.priority === 'high' ? 50 : task.priority === 'medium' ? 30 : 10;
+                let newXp = (user.xp || 0) + xpGain;
+                let newLevel = user.level || 1;
+                const xpNeeded = newLevel * 100;
+
+                if (newXp >= xpNeeded) {
+                    newLevel += 1;
+                    newXp -= xpNeeded;
+                    toast.success(`🎉 Level Up! You are now Level ${newLevel}!`);
+                } else {
+                    toast.success(`+${xpGain} XP gained!`);
+                }
+
+                const userRes = await axios.patch(`${API_URL}/auth/me`, { xp: newXp, level: newLevel }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                // Note: user state needs to be updated. Since we are in Context, we should have a setUser!
+                // We'll dispatch a custom event or we need to add `setUser` to context state.
+                window.dispatchEvent(new CustomEvent('user-updated', { detail: userRes.data }));
+            }
         } catch (err) {
             console.error(err);
         }
@@ -258,7 +291,7 @@ export const TaskProvider = ({ children }) => {
     return (
         <TaskContext.Provider value={{
             user, token, lists, activeListId, setActiveListId,
-            addTask, toggleTask, toggleImportant, deleteTask,
+            tasks, addTask, toggleTask, toggleImportant, deleteTask,
             activeTasks, addSubtask, toggleSubtask, setPriority,
             updateNote, updateTaskState, addList, updateList, deleteList, loginWithGoogle, logout, loading, authLoading
         }}>
