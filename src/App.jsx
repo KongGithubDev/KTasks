@@ -384,12 +384,12 @@ function App() {
                             {theme === 'light' ? (
                                 <>
                                     <Clock size={20} />
-                                    <span>โหมดมืด</span>
+                                    <span>Dark mode</span>
                                 </>
                             ) : (
                                 <>
                                     <Star size={20} />
-                                    <span>โหมดสว่าง</span>
+                                    <span>Light mode</span>
                                 </>
                             )}
                         </button>
@@ -406,19 +406,21 @@ function App() {
                 </header>
 
                 <section className="task-list-container">
-                    <div className="create-task-wrapper">
-                        <div className="add-task-box">
-                            <Plus size={24} color="var(--primary)" strokeWidth={3} />
-                            <input
-                                ref={taskInputRef}
-                                type="text"
-                                placeholder="Add a task"
-                                value={newTaskTitle}
-                                onChange={(e) => setNewTaskTitle(e.target.value)}
-                                onKeyDown={handleAddTask}
-                            />
+                    {!['important', 'planned', 'today'].includes(activeListId) && (
+                        <div className="create-task-wrapper">
+                            <div className="add-task-box">
+                                <Plus size={24} color="var(--primary)" strokeWidth={3} />
+                                <input
+                                    ref={taskInputRef}
+                                    type="text"
+                                    placeholder="Add a task"
+                                    value={newTaskTitle}
+                                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                                    onKeyDown={handleAddTask}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="task-items-list" style={{ display: viewMode === 'kanban' ? 'flex' : 'block', gap: '20px', overflowX: viewMode === 'kanban' ? 'auto' : 'hidden', paddingBottom: '20px' }}>
 
