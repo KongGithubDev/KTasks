@@ -256,12 +256,10 @@ app.use((req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-}).on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-        console.error(`Port ${PORT} is already in use. Please close the other process.`);
-    } else {
-        console.error('Server failed to start:', err.message);
-    }
-});
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
