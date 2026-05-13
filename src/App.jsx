@@ -33,6 +33,7 @@ import SaveIcon from '@mui/icons-material/Save'
 import RadioButtonUnchecked from '@mui/icons-material/RadioButtonUnchecked'
 import Logout from '@mui/icons-material/Logout'
 import { useTasks } from './context/TaskContext'
+import NavItem from './components/ui/NavItem.jsx'
 import { GoogleLogin } from '@react-oauth/google'
 import { Toaster, toast } from 'react-hot-toast'
 
@@ -427,23 +428,18 @@ function App() {
                                                 if (isMobile) setSidebarOpen(false);
                                             }}
                                             actions={
-                                                <div className="list-actions">
-                                                    <button type="button" onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        setEditingListId(listId);
-                                                        setEditListTitle(list.name);
-                                                    }}>
-                                                        <ChevronRight sx={{fontSize:'14px'}} className="rotate-90" />
-                                                    </button>
-                                                    <button type="button" onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        setListToDelete(listId);
-                                                    }}>
-                                                        <Delete sx={{fontSize:'14px'}} />
-                                                    </button>
-                                                </div>
+                                                <Stack direction="row" spacing={0.5}>
+                                                    <Tooltip title="Edit list">
+                                                        <IconButton size="small" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingListId(listId); setEditListTitle(list.name); }}>
+                                                            <ChevronRight sx={{fontSize:14}} className="rotate-90" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Delete list">
+                                                        <IconButton size="small" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setListToDelete(listId); }}>
+                                                            <Delete sx={{fontSize:14}} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Stack>
                                             }
                                         />
                                     )}
@@ -451,18 +447,20 @@ function App() {
                             );
                         })}
                         {isCreatingList && (
-                            <div className="new-list-card glass">
-                                <input
+                            <Paper sx={{ p: 2, mb: 1 }}>
+                                <TextField
                                     autoFocus
+                                    fullWidth
+                                    size="small"
                                     placeholder="Enter list name..."
                                     value={newListTitle}
                                     onChange={(e) => setNewListTitle(e.target.value)}
                                     onKeyDown={handleAddList}
-                                    className="list-input"
+                                    sx={{ mb: 1 }}
                                 />
-                                <div className="card-actions">
-                                    <button className="btn-cancel" onClick={() => setIsCreatingList(false)}>Cancel</button>
-                                    <button className="btn-add" onClick={() => {
+                                <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                    <Button size="small" variant="outlined" onClick={() => setIsCreatingList(false)}>Cancel</Button>
+                                    <Button size="small" variant="contained" onClick={() => {
                                         if (newListTitle.trim()) {
                                             addList(newListTitle);
                                             setNewListTitle('');
@@ -470,18 +468,17 @@ function App() {
                                         } else {
                                             toast.error('Name required');
                                         }
-                                    }}>Add List</button>
-                                </div>
-                            </div>
+                                    }}>Add List</Button>
+                                </Stack>
+                            </Paper>
                         )}
                     </div>
                 </nav>
 
                 {!isCreatingList && (
-                    <button className="new-list-btn" onClick={() => setIsCreatingList(true)}>
-                        <Add sx={{fontSize:'22px'}} />
-                        <span>Create New List</span>
-                    </button>
+                    <Button fullWidth variant="text" startIcon={<Add />} onClick={() => setIsCreatingList(true)} sx={{ justifyContent: 'flex-start', px: 2 }}>
+                        Create New List
+                    </Button>
                 )}
 
                 <div className="sidebar-footer">
@@ -496,9 +493,9 @@ function App() {
             <main className="main-content">
                 <header className="main-header">
                     <div className="header-left">
-                        <button className="icon-button" onClick={() => setSidebarOpen(!isSidebarOpen)}>
-                            <Menu sx={{fontSize:'24px'}} />
-                        </button>
+                        <IconButton onClick={() => setSidebarOpen(!isSidebarOpen)}>
+                            <Menu />
+                        </IconButton>
                         <h1>
                             {activeListId === 'important' ? 'Important' :
                                 activeListId === 'planned' ? 'Planned' :
@@ -747,9 +744,11 @@ function App() {
                                                                 {isBlocked && <Lock sx={{fontSize:'14px',color:'#ff4d4f'}} />}
                                                                 {task.title}
                                                             </span>
-                                                            <button className="icon-button delete-btn" onClick={(e) => { e.stopPropagation(); deleteTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }} style={{ padding: '4px', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                                                                <Delete sx={{fontSize:'16px'}} />
-                                                            </button>
+                                                            <Tooltip title="Delete">
+                                                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); deleteTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }}>
+                                                                    <Delete sx={{fontSize:16}} />
+                                                                </IconButton>
+                                                            </Tooltip>
                                                         </div>
 
                                                         <div className="task-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
@@ -939,80 +938,50 @@ function App() {
                             />
                         </Box>
 
-                        <div className="detail-section">
-                            <label><CalendarToday sx={{fontSize:'16px'}} /> Due Date & Time</label>
-                            <div className="date-time-inputs" style={{ display: 'flex', gap: '10px' }}>
-                                <input
-                                    type="date"
-                                    value={selectedTask.dueDate ? new Date(selectedTask.dueDate).toISOString().split('T')[0] : ''}
-                                    onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { dueDate: e.target.value })}
-                                    style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
-                                />
-                                <input
-                                    type="time"
-                                    value={selectedTask.dueTime || ''}
-                                    onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { dueTime: e.target.value })}
-                                    style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
-                                />
-                            </div>
-                        </div>
+                        <Box mb={2}>
+                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><CalendarToday fontSize="small" /> Due Date & Time</Typography>
+                            <Stack direction="row" spacing={1}>
+                                <TextField type="date" size="small" fullWidth value={selectedTask.dueDate ? new Date(selectedTask.dueDate).toISOString().split('T')[0] : ''} onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { dueDate: e.target.value })} />
+                                <TextField type="time" size="small" fullWidth value={selectedTask.dueTime || ''} onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { dueTime: e.target.value })} />
+                            </Stack>
+                        </Box>
 
-                        <div className="detail-section">
-                            <label><CalendarToday sx={{fontSize:'16px'}} /> Recurrence</label>
-                            <select
-                                value={selectedTask.recurrence || 'none'}
-                                onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { recurrence: e.target.value })}
-                                style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
-                            >
-                                <option value="none">Does not repeat</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                                <option value="yearly">Yearly</option>
-                            </select>
+                        <Box mb={2}>
+                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><CalendarToday fontSize="small" /> Recurrence</Typography>
+                            <FormControl fullWidth size="small">
+                                <Select value={selectedTask.recurrence || 'none'} onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { recurrence: e.target.value })}>
+                                    <MenuItem value="none">Does not repeat</MenuItem>
+                                    <MenuItem value="daily">Daily</MenuItem>
+                                    <MenuItem value="weekly">Weekly</MenuItem>
+                                    <MenuItem value="monthly">Monthly</MenuItem>
+                                    <MenuItem value="yearly">Yearly</MenuItem>
+                                </Select>
+                            </FormControl>
                             {selectedTask.recurrence === 'weekly' && (
-                                <div style={{ marginTop: '10px' }}>
-                                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Repeat on</label>
-                                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
-                                            <button
-                                                key={day}
-                                                onClick={() => updateTaskState(selectedTask._id || selectedTask.id, { recurrenceDayOfWeek: idx })}
-                                                style={{
-                                                    padding: '6px 10px',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid var(--border-color)',
-                                                    background: selectedTask.recurrenceDayOfWeek === idx ? 'var(--primary)' : 'var(--glass-bg)',
-                                                    color: selectedTask.recurrenceDayOfWeek === idx ? 'white' : 'var(--text-primary)',
-                                                    cursor: 'pointer',
-                                                    fontSize: '0.8rem',
-                                                    fontWeight: selectedTask.recurrenceDayOfWeek === idx ? 'bold' : 'normal',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                {day}
-                                            </button>
+                                <Box mt={1.5}>
+                                    <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>Repeat on</Typography>
+                                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                                        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((day, idx) => (
+                                            <Button key={day} size="small" variant={selectedTask.recurrenceDayOfWeek === idx ? 'contained' : 'outlined'} onClick={() => updateTaskState(selectedTask._id || selectedTask.id, { recurrenceDayOfWeek: idx })}>{day}</Button>
                                         ))}
-                                    </div>
-                                </div>
+                                    </Stack>
+                                </Box>
                             )}
-                        </div>
+                        </Box>
 
-                        <div className="detail-section">
-                            <label>Tags</label>
-                            <div className="tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                        <Box mb={2}>
+                            <Typography variant="body2" color="text.secondary" mb={1}>Tags</Typography>
+                            <Stack direction="row" flexWrap="wrap" gap={0.5} mb={1}>
                                 {(selectedTask.tags || []).map(tag => (
-                                    <span key={tag} style={{ background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        #{tag}
-                                        <button onClick={() => {
-                                            const newTags = (selectedTask.tags || []).filter(t => t !== tag);
-                                            updateTaskState(selectedTask._id || selectedTask.id, { tags: newTags });
-                                        }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: '12px', padding: 0 }}>&times;</button>
-                                    </span>
+                                    <Chip key={tag} label={`#${tag}`} color="primary" size="small" onDelete={() => {
+                                        const newTags = (selectedTask.tags || []).filter(t => t !== tag);
+                                        updateTaskState(selectedTask._id || selectedTask.id, { tags: newTags });
+                                    }} />
                                 ))}
-                            </div>
-                            <input
-                                type="text"
+                            </Stack>
+                            <TextField
+                                size="small"
+                                fullWidth
                                 placeholder="Add tag and press Enter"
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && e.target.value.trim() !== '') {
@@ -1024,148 +993,104 @@ function App() {
                                         e.target.value = '';
                                     }
                                 }}
-                                style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
                             />
-                        </div>
+                        </Box>
 
-                        <div className="detail-section">
-                            <label><Star sx={{fontSize:'16px'}} /> Priority</label>
-                            <div className="priority-selector">
-                                {['low', 'medium', 'high'].map(p => (
-                                    <button
-                                        key={p}
-                                        className={`p-btn ${p} ${selectedTask.priority === p ? 'active' : ''}`}
-                                        onClick={() => setPriority(selectedTask._id || selectedTask.id, p)}
-                                    >
+                        <Box mb={2}>
+                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><Star fontSize="small" /> Priority</Typography>
+                            <Stack direction="row" spacing={1}>
+                                {['low','medium','high'].map(p => (
+                                    <Button key={p} size="small" variant={selectedTask.priority === p ? 'contained' : 'outlined'} color={p === 'high' ? 'error' : p === 'medium' ? 'warning' : 'info'} onClick={() => setPriority(selectedTask._id || selectedTask.id, p)}>
                                         {p}
-                                    </button>
+                                    </Button>
                                 ))}
-                            </div>
-                        </div>
+                            </Stack>
+                        </Box>
 
-                        <div className="detail-section">
-                            <label><Link sx={{fontSize:'16px'}} /> Blocked By</label>
-                            <select
-                                value={selectedTask.blockedBy?.[0] || ''}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    updateTaskState(selectedTask._id || selectedTask.id, { blockedBy: val ? [val] : [] });
-                                }}
-                                className="glass"
-                                style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)', outline: 'none' }}
-                            >
-                                <option value="">None</option>
-                                {activeTasks.filter(t => (t._id || t.id) !== (selectedTask._id || selectedTask.id)).map(t => (
-                                    <option key={t._id || t.id} value={t._id || t.id}>{t.title}</option>
-                                ))}
-                            </select>
-                        </div>
+                        <Box mb={2}>
+                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><Link fontSize="small" /> Blocked By</Typography>
+                            <FormControl fullWidth size="small">
+                                <Select value={selectedTask.blockedBy?.[0] || ''} onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { blockedBy: e.target.value ? [e.target.value] : [] })}>
+                                    <MenuItem value="">None</MenuItem>
+                                    {activeTasks.filter(t => (t._id || t.id) !== (selectedTask._id || selectedTask.id)).map(t => (
+                                        <MenuItem key={t._id || t.id} value={t._id || t.id}>{t.title}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Box>
 
-                        <div className="detail-section">
-                            <label><AccessTime sx={{fontSize:'16px'}} /> Focus Pomodoro Timer</label>
-                            <div className="timer-controls glass" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderRadius: '12px', background: activeTimerTaskId === (selectedTask._id || selectedTask.id) ? 'rgba(255, 77, 79, 0.05)' : 'var(--glass-bg)', border: activeTimerTaskId === (selectedTask._id || selectedTask.id) ? '1px solid rgba(255, 77, 79, 0.3)' : '1px solid var(--border-color)' }}>
+                        <Box mb={2}>
+                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><AccessTime fontSize="small" /> Focus Pomodoro Timer</Typography>
+                            <Paper sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: activeTimerTaskId === (selectedTask._id || selectedTask.id) ? '1px solid' : undefined, borderColor: 'error.light' }}>
                                 {activeTimerTaskId === (selectedTask._id || selectedTask.id) ? (
                                     <>
-                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <span style={{ fontSize: '0.8rem', color: '#ff4d4f', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Tracking Focus</span>
-                                            <span style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
+                                        <Box>
+                                            <Typography variant="caption" color="error" fontWeight="bold" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>Tracking Focus</Typography>
+                                            <Typography variant="h4" fontWeight="bold" sx={{ fontVariantNumeric: 'tabular-nums' }}>
                                                 {String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:{String(timerSeconds % 60).padStart(2, '0')}
-                                            </span>
-                                        </div>
-                                        <button onClick={handleStopTimer} style={{ background: '#ff4d4f', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(255, 77, 79, 0.3)' }}>
-                                            Stop Focus
-                                        </button>
+                                            </Typography>
+                                        </Box>
+                                        <Button variant="contained" color="error" onClick={handleStopTimer}>Stop Focus</Button>
                                     </>
                                 ) : (
                                     <>
-                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Total Time Logged</span>
-                                            <span style={{ fontSize: '1.2rem', fontWeight: '500', color: 'var(--text-primary)' }}>
-                                                {Math.floor((selectedTask.timeSpent || 0) / 60)}m {(selectedTask.timeSpent || 0) % 60}s
-                                            </span>
-                                        </div>
-                                        <button onClick={() => {
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary">Total Time Logged</Typography>
+                                            <Typography variant="h6">{Math.floor((selectedTask.timeSpent || 0) / 60)}m {(selectedTask.timeSpent || 0) % 60}s</Typography>
+                                        </Box>
+                                        <Button variant="contained" onClick={() => {
                                             if (activeTimerTaskId) handleStopTimer();
                                             setActiveTimerTaskId(selectedTask._id || selectedTask.id);
                                             setTimerSeconds(0);
-                                        }} style={{ background: 'var(--primary)', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }} className="start-focus-btn">
-                                            Start Focus
-                                        </button>
+                                        }}>Start Focus</Button>
                                     </>
                                 )}
-                            </div>
-                        </div>
+                            </Paper>
+                        </Box>
 
-                        <div className="detail-section">
+                        <Box mb={2}>
                             {!templateFormOpen ? (
-                                <button
-                                    onClick={() => setTemplateFormOpen(true)}
-                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px dashed var(--primary)', background: 'var(--primary-light)', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '500' }}
-                                >
-                                    <SaveIcon sx={{fontSize:'16px'}} /> Save as Template
-                                </button>
+                                <Button fullWidth variant="outlined" color="primary" startIcon={<SaveIcon />} onClick={() => setTemplateFormOpen(true)}>Save as Template</Button>
                             ) : (
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <input
-                                        autoFocus
-                                        placeholder="Template name..."
-                                        value={templateName}
-                                        onChange={(e) => setTemplateName(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && templateName.trim()) {
-                                                addTemplate({
-                                                    name: templateName.trim(),
-                                                    title: selectedTask.title,
-                                                    note: selectedTask.note,
-                                                    priority: selectedTask.priority,
-                                                    dueTime: selectedTask.dueTime,
-                                                    recurrence: selectedTask.recurrence,
-                                                    recurrenceDayOfWeek: selectedTask.recurrenceDayOfWeek,
-                                                    tags: selectedTask.tags,
-                                                    important: selectedTask.important
-                                                });
-                                                setTemplateName('');
-                                                setTemplateFormOpen(false);
-                                            }
-                                        }}
-                                        style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
-                                    />
-                                    <button onClick={() => { setTemplateFormOpen(false); setTemplateName(''); }} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', cursor: 'pointer', color: 'var(--text-secondary)' }}><Close sx={{fontSize:'16px'}} /></button>
-                                </div>
+                                <Stack direction="row" spacing={1}>
+                                    <TextField autoFocus size="small" placeholder="Template name..." value={templateName} onChange={(e) => setTemplateName(e.target.value)} onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && templateName.trim()) {
+                                            addTemplate({ name: templateName.trim(), title: selectedTask.title, note: selectedTask.note, priority: selectedTask.priority, dueTime: selectedTask.dueTime, recurrence: selectedTask.recurrence, recurrenceDayOfWeek: selectedTask.recurrenceDayOfWeek, tags: selectedTask.tags, important: selectedTask.important });
+                                            setTemplateName('');
+                                            setTemplateFormOpen(false);
+                                        }
+                                    }} sx={{ flex: 1 }} />
+                                    <IconButton onClick={() => { setTemplateFormOpen(false); setTemplateName(''); }}><Close /></IconButton>
+                                </Stack>
                             )}
-                        </div>
+                        </Box>
 
-                        <div className="detail-section">
-                            <label><CalendarToday sx={{fontSize:'16px'}} /> Subtasks</label>
-                            <div className="subtasks-list">
+                        <Box mb={2}>
+                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><CalendarToday fontSize="small" /> Subtasks</Typography>
+                            <Stack spacing={0.5} mb={1}>
                                 {selectedTask.subtasks?.map(st => (
-                                    <div key={st._id || st.id} className="subtask-item">
-                                        <button onClick={() => toggleSubtask(selectedTask._id || selectedTask.id, st._id || st.id)}>
-                                            {st.completed ? <CheckCircle sx={{fontSize:'20px',color:'var(--primary)'}} /> : <RadioButtonUnchecked sx={{fontSize:'20px'}} />}
-                                        </button>
-                                        <span className={st.completed ? 'completed' : ''}>{st.title}</span>
-                                    </div>
+                                    <Stack key={st._id || st.id} direction="row" alignItems="center" spacing={1}>
+                                        <IconButton size="small" onClick={() => toggleSubtask(selectedTask._id || selectedTask.id, st._id || st.id)}>
+                                            {st.completed ? <CheckCircle sx={{color:'primary.main'}} /> : <RadioButtonUnchecked />}
+                                        </IconButton>
+                                        <Typography sx={{ textDecoration: st.completed ? 'line-through' : 'none', color: st.completed ? 'text.secondary' : 'text.primary' }}>{st.title}</Typography>
+                                    </Stack>
                                 ))}
-                                <div className="add-subtask">
-                                    <Add sx={{fontSize:'20px'}} />
-                                    <input
-                                        placeholder="Next step..."
-                                        value={subtaskInput}
-                                        onChange={(e) => setSubtaskInput(e.target.value)}
-                                        onKeyDown={handleAddSubtask}
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                                <TextField size="small" placeholder="Next step..." value={subtaskInput} onChange={(e) => setSubtaskInput(e.target.value)} onKeyDown={handleAddSubtask} />
+                            </Stack>
+                        </Box>
 
-                        <div className="detail-section">
-                            <label>Notes</label>
-                            <textarea
+                        <Box mb={2}>
+                            <Typography variant="body2" color="text.secondary" mb={1}>Notes</Typography>
+                            <TextField
+                                fullWidth
+                                multiline
+                                rows={3}
                                 placeholder="Additional context..."
                                 value={selectedTask.note}
                                 onChange={(e) => updateNote(selectedTask._id || selectedTask.id, e.target.value)}
                             />
-                        </div>
+                        </Box>
                     </div>
                 </Paper>
             )}
@@ -1322,16 +1247,6 @@ function App() {
             </Dialog>
         </div>
     );
-}
-
-function NavItem({ icon, label, active, onClick, actions }) {
-    return (
-        <div className={`nav-item ${active ? 'active' : ''}`} onClick={onClick}>
-            {icon || <div className="nav-dot" />}
-            <span className="nav-label">{label}</span>
-            {actions}
-        </div>
-    )
 }
 
 export default App
