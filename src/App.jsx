@@ -1,32 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import {
-    CheckCircle2,
-    Menu,
-    Plus,
-    Search,
-    Star,
-    Calendar,
-    Clock,
-    ChevronRight,
-    User,
-    Circle,
-    LogOut,
-    Sun,
-    Columns,
-    List as ListIcon,
-    Lock,
-    Link,
-    Trash2,
-    Eye,
-    EyeOff,
-    AlertTriangle,
-    LayoutGrid,
-    ChevronLeft,
-    BarChart3,
-    Archive,
-    Save,
-    X
-} from 'lucide-react'
+import FAIcon from './components/FAIcon.jsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTasks } from './context/TaskContext'
 import { GoogleLogin } from '@react-oauth/google'
@@ -337,7 +310,7 @@ function App() {
         return (
             <div className="loading-screen glass">
                 <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
-                    <CheckCircle2 size={48} color="var(--primary)" />
+                    <FAIcon name="circle-check" style={{fontSize:'48px',color:'var(--primary)'}} />
                 </motion.div>
                 <p>Loading your tasks...</p>
             </div>
@@ -391,9 +364,9 @@ function App() {
                 </div>
 
                 <nav className="sidebar-nav">
-                    <NavItem icon={<Star size={22} />} label="Important" active={activeListId === 'important'} onClick={() => setActiveListId('important')} />
-                    <NavItem icon={<Sun size={22} />} label="Today" active={activeListId === 'today'} onClick={() => setActiveListId('today')} />
-                    <NavItem icon={<Calendar size={22} />} label="Planned" active={activeListId === 'planned'} onClick={() => setActiveListId('planned')} />
+                    <NavItem icon={<FAIcon name="star" style={{fontSize:'22px'}} />} label="Important" active={activeListId === 'important'} onClick={() => setActiveListId('important')} />
+                    <NavItem icon={<FAIcon name="sun" style={{fontSize:'22px'}} />} label="Today" active={activeListId === 'today'} onClick={() => setActiveListId('today')} />
+                    <NavItem icon={<FAIcon name="calendar-days" style={{fontSize:'22px'}} />} label="Planned" active={activeListId === 'planned'} onClick={() => setActiveListId('planned')} />
 
                     <div className="nav-divider"></div>
 
@@ -405,7 +378,7 @@ function App() {
                                 <div key={listId} className="nav-item-wrapper">
                                     {String(editingListId) === listId ? (
                                         <div className="nav-item editing">
-                                            <Plus size={22} className="rotate-45" />
+                                            <FAIcon name="plus" style={{fontSize:'22px'}} className="rotate-45" />
                                             <input
                                                 autoFocus
                                                 value={editListTitle}
@@ -430,14 +403,14 @@ function App() {
                                                         setEditingListId(listId);
                                                         setEditListTitle(list.name);
                                                     }}>
-                                                        <ChevronRight size={14} className="rotate-90" />
+                                                        <FAIcon name="chevron-right" style={{fontSize:'14px'}} className="rotate-90" />
                                                     </button>
                                                     <button type="button" onClick={(e) => {
                                                         e.preventDefault();
                                                         e.stopPropagation();
                                                         setListToDelete(listId);
                                                     }}>
-                                                        <Trash2 size={14} />
+                                                        <FAIcon name="trash" style={{fontSize:'14px'}} />
                                                     </button>
                                                 </div>
                                             }
@@ -475,7 +448,7 @@ function App() {
 
                 {!isCreatingList && (
                     <button className="new-list-btn" onClick={() => setIsCreatingList(true)}>
-                        <Plus size={22} />
+                        <FAIcon name="plus" style={{fontSize:'22px'}} />
                         <span>Create New List</span>
                     </button>
                 )}
@@ -493,7 +466,7 @@ function App() {
                 <header className="main-header">
                     <div className="header-left">
                         <button className="icon-button" onClick={() => setSidebarOpen(!isSidebarOpen)}>
-                            <Menu size={24} />
+                            <FAIcon name="bars" style={{fontSize:'24px'}} />
                         </button>
                         <h1>
                             {activeListId === 'important' ? 'Important' :
@@ -504,7 +477,7 @@ function App() {
 
                     <div className="header-right">
                         <div className="search-bar-wrapper glass">
-                            <Search size={18} className="search-icon" />
+                            <FAIcon name="magnifying-glass" style={{fontSize:'18px'}} className="search-icon" />
                             <input
                                 type="text"
                                 placeholder="Search..."
@@ -525,29 +498,29 @@ function App() {
                             <option value="alphabetical">A-Z</option>
                         </select>
                         <button className="theme-toggle-btn glass" onClick={() => setShowCompleted(!showCompleted)} title={showCompleted ? 'Hide completed' : 'Show completed'}>
-                            {showCompleted ? <Eye size={20} /> : <EyeOff size={20} />}
+                            {showCompleted ? <FAIcon name="eye" style={{fontSize:'20px'}} /> : <FAIcon name="eye-slash" style={{fontSize:'20px'}} />}
                         </button>
                         <button className="theme-toggle-btn glass" onClick={() => setCalendarOpen(!calendarOpen)} title="Calendar">
-                            <LayoutGrid size={20} />
+                            <FAIcon name="grid-2" style={{fontSize:'20px'}} />
                         </button>
                         <button className="theme-toggle-btn glass" onClick={() => setStatsOpen(true)} title="Statistics">
-                            <BarChart3 size={20} />
+                            <FAIcon name="chart-simple" style={{fontSize:'20px'}} />
                         </button>
                         <button className="theme-toggle-btn glass" onClick={() => setShowArchived(!showArchived)} title={showArchived ? 'Hide archived' : 'Show archived'}>
-                            <Archive size={20} color={showArchived ? 'var(--primary)' : 'inherit'} />
+                            <FAIcon name="box-archive" style={{fontSize:'20px',color:showArchived ? 'var(--primary)' : 'inherit'}} />
                         </button>
                         <button className="theme-toggle-btn glass" onClick={() => setViewMode(viewMode === 'list' ? 'kanban' : 'list')} title="Toggle View">
-                            {viewMode === 'list' ? <Columns size={20} /> : <ListIcon size={20} />}
+                            {viewMode === 'list' ? <FAIcon name="columns" style={{fontSize:'20px'}} /> : <FAIcon name="list" style={{fontSize:'20px'}} />}
                         </button>
                         <button className="theme-toggle-btn glass" onClick={toggleTheme}>
                             {theme === 'light' ? (
                                 <>
-                                    <Clock size={20} />
+                                    <FAIcon name="clock" style={{fontSize:'20px'}} />
                                     <span>Dark mode</span>
                                 </>
                             ) : (
                                 <>
-                                    <Star size={20} />
+                                    <FAIcon name="star" style={{fontSize:'20px'}} />
                                     <span>Light mode</span>
                                 </>
                             )}
@@ -558,7 +531,7 @@ function App() {
                                 <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 'bold' }}>Level {user?.level || 1}</span>
                             </div>
                             <div className="user-avatar" style={{ border: '2px solid var(--primary)', padding: '2px', borderRadius: '50%' }}>
-                                {user?.picture ? <img src={user.picture} alt="Avatar" style={{ borderRadius: '50%' }} /> : <User size={20} />}
+                                {user?.picture ? <img src={user.picture} alt="Avatar" style={{ borderRadius: '50%' }} /> : <FAIcon name="user" style={{fontSize:'20px'}} />}
                             </div>
                         </div>
                     </div>
@@ -586,9 +559,9 @@ function App() {
                     {calendarOpen && (
                         <div className="calendar-wrapper glass" style={{ padding: '16px', borderRadius: '16px', marginBottom: '16px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                <button className="icon-button" onClick={prevMonth}><ChevronLeft size={24} /></button>
+                                <button className="icon-button" onClick={prevMonth}><FAIcon name="chevron-left" style={{fontSize:'24px'}} /></button>
                                 <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>{MONTH_NAMES[calendarMonth]} {calendarYear}</h3>
-                                <button className="icon-button" onClick={nextMonth}><ChevronRight size={24} /></button>
+                                <button className="icon-button" onClick={nextMonth}><FAIcon name="chevron-right" style={{fontSize:'24px'}} /></button>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '8px' }}>
                                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
@@ -648,7 +621,7 @@ function App() {
                     {!['important', 'planned', 'today'].includes(activeListId) && (
                         <div className="create-task-wrapper">
                             <div className="add-task-box">
-                                <Plus size={24} color="var(--primary)" strokeWidth={3} />
+                                <FAIcon name="plus" style={{fontSize:'24px',color:'var(--primary)'}} />
                                 <input
                                     ref={taskInputRef}
                                     type="text"
@@ -665,7 +638,7 @@ function App() {
                                         onClick={() => setTemplateDropdownOpen(!templateDropdownOpen)}
                                         style={{ fontSize: '0.85rem', padding: '6px 12px' }}
                                     >
-                                        <Save size={14} /> Use Template
+                                        <FAIcon name="floppy-disk" style={{fontSize:'14px'}} /> Use Template
                                     </button>
                                     {templateDropdownOpen && (
                                         <div className="glass" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 50, marginTop: '4px', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden', minWidth: '200px' }}>
@@ -696,7 +669,7 @@ function App() {
                                                         onClick={(e) => { e.stopPropagation(); deleteTemplate(idx); }}
                                                         style={{ background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer', padding: '2px' }}
                                                     >
-                                                        <Trash2 size={12} />
+                                                        <FAIcon name="trash" style={{fontSize:'12px'}} />
                                                     </button>
                                                 </button>
                                             ))}
@@ -746,11 +719,11 @@ function App() {
                                                     >
                                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                                                             <span className="task-title" style={{ fontWeight: '600', fontSize: '1rem', textDecoration: task.completed ? 'line-through' : 'none', color: task.completed ? 'var(--text-secondary)' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                {isBlocked && <Lock size={14} color="#ff4d4f" />}
+                                                                {isBlocked && <FAIcon name="lock" style={{fontSize:'14px',color:'#ff4d4f'}} />}
                                                                 {task.title}
                                                             </span>
                                                             <button className="icon-button delete-btn" onClick={(e) => { e.stopPropagation(); deleteTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }} style={{ padding: '4px', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                                                                <Trash2 size={16} />
+                                                                <FAIcon name="trash" style={{fontSize:'16px'}} />
                                                             </button>
                                                         </div>
 
@@ -760,7 +733,7 @@ function App() {
                                                             )}
                                                             {task.dueDate && (
                                                                 <span className="task-date" style={{ fontSize: '0.75rem', color: getDueStatus(task) === 'overdue' ? '#ff4d4f' : getDueStatus(task) === 'today' ? '#ff8c00' : getDueStatus(task) === 'soon' ? '#d4a017' : 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', background: getDueStatus(task) === 'overdue' ? 'rgba(255, 77, 79, 0.1)' : getDueStatus(task) === 'today' ? 'rgba(255, 140, 0, 0.1)' : getDueStatus(task) === 'soon' ? 'rgba(255, 215, 0, 0.15)' : 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>
-                                                                    <Calendar size={10} />
+                                                                    <FAIcon name="calendar" style={{fontSize:'10px'}} />
                                                                     {new Date(task.dueDate).toLocaleDateString()}
                                                                 </span>
                                                             )}
@@ -825,11 +798,11 @@ function App() {
                                                     style={{ cursor: isBlocked ? 'not-allowed' : 'pointer' }}
                                                 >
                                                     {isBlocked ? (
-                                                        <Lock size={20} color="#ff4d4f" />
+                                                        <FAIcon name="lock" style={{fontSize:'20px',color:'#ff4d4f'}} />
                                                     ) : task.completed ? (
-                                                        <CheckCircle2 size={28} color="var(--primary)" fill="var(--primary)" fillOpacity="0.2" strokeWidth={2.5} />
+                                                        <FAIcon name="circle-check" style={{fontSize:'28px',color:'var(--primary)'}} />
                                                     ) : (
-                                                        <Circle size={28} color="var(--border-color)" strokeWidth={2.5} />
+                                                        <FAIcon name="circle" regular style={{fontSize:'28px',color:'var(--border-color)'}} />
                                                     )}
                                                 </button>
                                                 <div className="task-body">
@@ -842,7 +815,7 @@ function App() {
                                                         )}
                                                         {getDueStatus(task) === 'overdue' && (
                                                             <span style={{ fontSize: '0.7rem', background: '#ff4d4f', color: 'white', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                                                                <AlertTriangle size={10} /> Overdue
+                                                                <FAIcon name="triangle-exclamation" style={{fontSize:'10px'}} /> Overdue
                                                             </span>
                                                         )}
                                                     </div>
@@ -850,7 +823,7 @@ function App() {
                                                         {task.note && <span className="task-note">{task.note.substring(0, 60)}{task.note.length > 60 ? '...' : ''}</span>}
                                                         {task.dueDate && (
                                                             <span className="task-date" style={{ fontSize: '0.8rem', color: getDueStatus(task) === 'overdue' ? '#ff4d4f' : getDueStatus(task) === 'today' ? '#ff8c00' : getDueStatus(task) === 'soon' ? '#d4a017' : 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', background: getDueStatus(task) === 'overdue' ? 'rgba(255, 77, 79, 0.1)' : getDueStatus(task) === 'today' ? 'rgba(255, 140, 0, 0.1)' : getDueStatus(task) === 'soon' ? 'rgba(255, 215, 0, 0.15)' : 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>
-                                                                <Calendar size={12} />
+                                                                <FAIcon name="calendar" style={{fontSize:'12px'}} />
                                                                 {new Date(task.dueDate).toLocaleDateString()} {task.dueTime || ''}
                                                             </span>
                                                         )}
@@ -876,15 +849,15 @@ function App() {
                                                 </div>
                                                 <div className="task-actions">
                                                     <button className="icon-button star-btn" onClick={(e) => { e.stopPropagation(); toggleImportant(task._id || task.id); }}>
-                                                        <Star size={20} fill={task.important ? "var(--primary)" : "none"} color={task.important ? "var(--primary)" : "var(--text-secondary)"} />
+                                                        <FAIcon name="star" solid={task.important} regular={!task.important} style={{fontSize:'20px',color:task.important ? 'var(--primary)' : 'var(--text-secondary)'}} />
                                                     </button>
                                                     {!task.archived && (
                                                         <button className="icon-button" onClick={(e) => { e.stopPropagation(); archiveTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }} title="Archive">
-                                                            <Archive size={18} color="var(--text-secondary)" />
+                                                            <FAIcon name="box-archive" style={{fontSize:'18px',color:'var(--text-secondary)'}} />
                                                         </button>
                                                     )}
                                                     <button className="icon-button delete-btn" onClick={(e) => { e.stopPropagation(); deleteTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }}>
-                                                        <Trash2 size={20} />
+                                                        <FAIcon name="trash" style={{fontSize:'20px'}} />
                                                     </button>
                                                 </div>
                                             </motion.div>
@@ -898,7 +871,7 @@ function App() {
                                             transition={{ duration: 1 }}
                                             className="empty-icon"
                                         >
-                                            <CheckCircle2 size={120} strokeWidth={0.5} />
+                                            <FAIcon name="circle-check" style={{fontSize:'120px',color:'var(--primary)',opacity:0.3}} />
                                         </motion.div>
                                         <h3>Your plate is clear</h3>
                                         <p>Enjoy the peace, or start something new.</p>
@@ -921,7 +894,7 @@ function App() {
                 <aside className={`detail-panel glass ${selectedTaskId ? 'open' : ''}`}>
                     <div className="detail-header">
                         <span>Task Details</span>
-                        <button className="icon-button" onClick={() => setSelectedTaskId(null)}><ChevronRight size={20} /></button>
+                        <button className="icon-button" onClick={() => setSelectedTaskId(null)}><FAIcon name="chevron-right" style={{fontSize:'20px'}} /></button>
                     </div>
 
                     <div className="detail-content">
@@ -934,7 +907,7 @@ function App() {
                         </div>
 
                         <div className="detail-section">
-                            <label><Calendar size={16} /> Due Date & Time</label>
+                            <label><FAIcon name="calendar-days" style={{fontSize:'16px'}} /> Due Date & Time</label>
                             <div className="date-time-inputs" style={{ display: 'flex', gap: '10px' }}>
                                 <input
                                     type="date"
@@ -952,7 +925,7 @@ function App() {
                         </div>
 
                         <div className="detail-section">
-                            <label><Calendar size={16} /> Recurrence</label>
+                            <label><FAIcon name="calendar-days" style={{fontSize:'16px'}} /> Recurrence</label>
                             <select
                                 value={selectedTask.recurrence || 'none'}
                                 onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { recurrence: e.target.value })}
@@ -1023,7 +996,7 @@ function App() {
                         </div>
 
                         <div className="detail-section">
-                            <label><Star size={16} /> Priority</label>
+                            <label><FAIcon name="star" style={{fontSize:'16px'}} /> Priority</label>
                             <div className="priority-selector">
                                 {['low', 'medium', 'high'].map(p => (
                                     <button
@@ -1038,7 +1011,7 @@ function App() {
                         </div>
 
                         <div className="detail-section">
-                            <label><Link size={16} /> Blocked By</label>
+                            <label><FAIcon name="link" style={{fontSize:'16px'}} /> Blocked By</label>
                             <select
                                 value={selectedTask.blockedBy?.[0] || ''}
                                 onChange={(e) => {
@@ -1056,7 +1029,7 @@ function App() {
                         </div>
 
                         <div className="detail-section">
-                            <label><Clock size={16} /> Focus Pomodoro Timer</label>
+                            <label><FAIcon name="clock" style={{fontSize:'16px'}} /> Focus Pomodoro Timer</label>
                             <div className="timer-controls glass" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderRadius: '12px', background: activeTimerTaskId === (selectedTask._id || selectedTask.id) ? 'rgba(255, 77, 79, 0.05)' : 'var(--glass-bg)', border: activeTimerTaskId === (selectedTask._id || selectedTask.id) ? '1px solid rgba(255, 77, 79, 0.3)' : '1px solid var(--border-color)' }}>
                                 {activeTimerTaskId === (selectedTask._id || selectedTask.id) ? (
                                     <>
@@ -1096,7 +1069,7 @@ function App() {
                                     onClick={() => setTemplateFormOpen(true)}
                                     style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px dashed var(--primary)', background: 'var(--primary-light)', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '500' }}
                                 >
-                                    <Save size={16} /> Save as Template
+                                    <FAIcon name="floppy-disk" style={{fontSize:'16px'}} /> Save as Template
                                 </button>
                             ) : (
                                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -1124,24 +1097,24 @@ function App() {
                                         }}
                                         style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
                                     />
-                                    <button onClick={() => { setTemplateFormOpen(false); setTemplateName(''); }} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', cursor: 'pointer', color: 'var(--text-secondary)' }}><X size={16} /></button>
+                                    <button onClick={() => { setTemplateFormOpen(false); setTemplateName(''); }} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', cursor: 'pointer', color: 'var(--text-secondary)' }}><FAIcon name="xmark" style={{fontSize:'16px'}} /></button>
                                 </div>
                             )}
                         </div>
 
                         <div className="detail-section">
-                            <label><Calendar size={16} /> Subtasks</label>
+                            <label><FAIcon name="calendar-days" style={{fontSize:'16px'}} /> Subtasks</label>
                             <div className="subtasks-list">
                                 {selectedTask.subtasks?.map(st => (
                                     <div key={st._id || st.id} className="subtask-item">
                                         <button onClick={() => toggleSubtask(selectedTask._id || selectedTask.id, st._id || st.id)}>
-                                            {st.completed ? <CheckCircle2 size={20} color="var(--primary)" /> : <Circle size={20} />}
+                                            {st.completed ? <FAIcon name="circle-check" style={{fontSize:'20px',color:'var(--primary)'}} /> : <FAIcon name="circle" regular style={{fontSize:'20px'}} />}
                                         </button>
                                         <span className={st.completed ? 'completed' : ''}>{st.title}</span>
                                     </div>
                                 ))}
                                 <div className="add-subtask">
-                                    <Plus size={20} />
+                                    <FAIcon name="plus" style={{fontSize:'20px'}} />
                                     <input
                                         placeholder="Next step..."
                                         value={subtaskInput}
@@ -1177,7 +1150,7 @@ function App() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div style={{ background: 'rgba(255, 77, 79, 0.1)', padding: '16px', borderRadius: '50%', marginBottom: '20px' }}>
-                                <Trash2 size={40} color="#ff4d4f" />
+                                <FAIcon name="trash" style={{fontSize:'40px',color:'#ff4d4f'}} />
                             </div>
                             <h3 style={{ marginBottom: '12px', fontSize: '1.5rem', fontWeight: '600' }}>Delete List?</h3>
                             <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', lineHeight: '1.5' }}>Are you sure you want to delete this list and all of its tasks? This action <strong style={{ color: 'var(--text-primary)' }}>cannot be undone</strong>.</p>
@@ -1222,7 +1195,7 @@ function App() {
 
                             <div style={{ marginBottom: '40px' }}>
                                 <h4 style={{ marginBottom: '16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Star size={18} color="#ffd700" fill="#ffd700" />
+                                    <FAIcon name="star" style={{fontSize:'18px',color:'#ffd700'}} />
                                     Achievements & Badges
                                 </h4>
                                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -1239,7 +1212,7 @@ function App() {
                             </div>
 
                             <button onClick={logout} style={{ width: '100%', padding: '14px', borderRadius: '16px', background: 'var(--glass-bg)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', fontWeight: '600', transition: 'all 0.2s' }} className="logout-btn-full">
-                                <LogOut size={18} /> Logout of KTasks
+                                <FAIcon name="right-from-bracket" style={{fontSize:'18px'}} /> Logout of KTasks
                             </button>
                         </motion.div>
                     </div>
@@ -1260,7 +1233,7 @@ function App() {
                         >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                 <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>{calendarDayTasks.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
-                                <button className="icon-button" onClick={() => setCalendarDayTasks(null)}><ChevronRight size={20} className="rotate-90" /></button>
+                                <button className="icon-button" onClick={() => setCalendarDayTasks(null)}><FAIcon name="chevron-right" style={{fontSize:'20px'}} className="rotate-90" /></button>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 {calendarDayTasks.tasks.map(task => (
@@ -1283,7 +1256,7 @@ function App() {
                                             onClick={(e) => { e.stopPropagation(); toggleTask(task._id || task.id); }}
                                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                                         >
-                                            {task.completed ? <CheckCircle2 size={22} color="var(--primary)" /> : <Circle size={22} color="var(--border-color)" />}
+                                            {task.completed ? <FAIcon name="circle-check" style={{fontSize:'22px',color:'var(--primary)'}} /> : <FAIcon name="circle" regular style={{fontSize:'22px',color:'var(--border-color)'}} />}
                                         </button>
                                         <div style={{ flex: 1 }}>
                                             <span style={{ textDecoration: task.completed ? 'line-through' : 'none', color: 'var(--text-primary)', fontWeight: '500' }}>{task.title}</span>
@@ -1319,9 +1292,9 @@ function App() {
                                     <>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                                             <h2 style={{ margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <BarChart3 size={28} color="var(--primary)" /> Statistics
+                                                <FAIcon name="chart-simple" style={{fontSize:'28px',color:'var(--primary)'}} /> Statistics
                                             </h2>
-                                            <button className="icon-button" onClick={() => setStatsOpen(false)}><X size={24} /></button>
+                                            <button className="icon-button" onClick={() => setStatsOpen(false)}><FAIcon name="xmark" style={{fontSize:'24px'}} /></button>
                                         </div>
 
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '24px' }}>
@@ -1345,7 +1318,7 @@ function App() {
 
                                         <div className="glass" style={{ padding: '16px', borderRadius: '16px', marginBottom: '20px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                                                <Clock size={18} color="var(--primary)" />
+                                                <FAIcon name="clock" style={{fontSize:'18px',color:'var(--primary)'}} />
                                                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Total Focus Time</span>
                                             </div>
                                             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
