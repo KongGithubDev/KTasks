@@ -1,47 +1,23 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-    Button, IconButton, TextField, Dialog, DialogTitle, DialogContent, Paper,
-    Select, MenuItem, Checkbox, Chip, Badge, Box, Stack, Typography,
-    FormControl, InputLabel, Divider, Tooltip, InputAdornment
-} from '@mui/material'
+import { motion } from 'framer-motion'
+import { Button, Paper, Stack, Typography } from '@mui/material'
 import CheckCircle from '@mui/icons-material/CheckCircle'
-import Star from '@mui/icons-material/Star'
-import StarBorder from '@mui/icons-material/StarBorder'
-import WbSunny from '@mui/icons-material/WbSunny'
-import CalendarToday from '@mui/icons-material/CalendarToday'
 import Add from '@mui/icons-material/Add'
-import ChevronRight from '@mui/icons-material/ChevronRight'
 import Delete from '@mui/icons-material/Delete'
-import Menu from '@mui/icons-material/Menu'
-import Search from '@mui/icons-material/Search'
-import Visibility from '@mui/icons-material/Visibility'
-import VisibilityOff from '@mui/icons-material/VisibilityOff'
-import GridView from '@mui/icons-material/GridView'
-import BarChart from '@mui/icons-material/BarChart'
-import Archive from '@mui/icons-material/Archive'
-import ViewColumn from '@mui/icons-material/ViewColumn'
-import FormatListBulleted from '@mui/icons-material/FormatListBulleted'
-import AccessTime from '@mui/icons-material/AccessTime'
-import Person from '@mui/icons-material/Person'
-import ChevronLeft from '@mui/icons-material/ChevronLeft'
-import Lock from '@mui/icons-material/Lock'
-import CalendarMonth from '@mui/icons-material/CalendarMonth'
-import Warning from '@mui/icons-material/Warning'
-import Close from '@mui/icons-material/Close'
 import SaveIcon from '@mui/icons-material/Save'
-import RadioButtonUnchecked from '@mui/icons-material/RadioButtonUnchecked'
-import Logout from '@mui/icons-material/Logout'
 import { useTasks } from './context/TaskContext'
 import { GoogleLogin } from '@react-oauth/google'
-import { Toaster, toast } from 'react-hot-toast'
+import { Toaster } from 'react-hot-toast'
 import Sidebar from './components/layout/Sidebar.jsx'
 import Header from './components/layout/Header.jsx'
 import DetailPanel from './components/layout/DetailPanel.jsx'
+import CalendarView from './components/layout/CalendarView.jsx'
 import DeleteListModal from './components/modals/DeleteListModal.jsx'
 import ProfileModal from './components/modals/ProfileModal.jsx'
 import CalendarDayModal from './components/modals/CalendarDayModal.jsx'
 import StatsModal from './components/modals/StatsModal.jsx'
+import KanbanBoard from './components/task/KanbanBoard.jsx'
+import TaskList from './components/task/TaskList.jsx'
 
 function App() {
     const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
@@ -450,73 +426,24 @@ function App() {
                         </Paper>
                     )}
 
-                    {/* Calendar View */}
                     {calendarOpen && (
-                        <div className="calendar-wrapper glass" style={{ padding: '16px', borderRadius: '16px', marginBottom: '16px' }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                <IconButton onClick={prevMonth}><ChevronLeft /></IconButton>
-                                <Typography variant="h6">{MONTH_NAMES[calendarMonth]} {calendarYear}</Typography>
-                                <IconButton onClick={nextMonth}><ChevronRight /></IconButton>
-                            </Box>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '8px' }}>
-                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-                                    <div key={d} style={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', padding: '8px 0' }}>{d}</div>
-                                ))}
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
-                                {Array.from({ length: getFirstDayOfMonth(calendarYear, calendarMonth) }).map((_, i) => (
-                                    <div key={`empty-${i}`} />
-                                ))}
-                                {Array.from({ length: getDaysInMonth(calendarYear, calendarMonth) }).map((_, i) => {
-                                    const day = i + 1;
-                                    const date = new Date(calendarYear, calendarMonth, day);
-                                    const dayTasks = getTasksForDate(date);
-                                    const isToday = new Date().toDateString() === date.toDateString();
-                                    return (
-                                        <button
-                                            key={day}
-                                            onClick={() => dayTasks.length > 0 && setCalendarDayTasks({ date, tasks: dayTasks })}
-                                            style={{
-                                                aspectRatio: '1',
-                                                borderRadius: '8px',
-                                                border: isToday ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-                                                background: isToday ? 'var(--primary-light)' : 'var(--glass-bg)',
-                                                color: 'var(--text-primary)',
-                                                cursor: dayTasks.length > 0 ? 'pointer' : 'default',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '4px',
-                                                padding: '4px',
-                                                position: 'relative'
-                                            }}
-                                        >
-                                            <span style={{ fontSize: '0.9rem', fontWeight: isToday ? 'bold' : 'normal' }}>{day}</span>
-                                            {dayTasks.length > 0 && (
-                                                <div style={{ display: 'flex', gap: '2px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                                    {dayTasks.slice(0, 3).map((t, idx) => (
-                                                        <div key={idx} style={{
-                                                            width: '6px',
-                                                            height: '6px',
-                                                            borderRadius: '50%',
-                                                            background: t.completed ? '#52c41a' : t.priority === 'high' ? '#ff4d4f' : t.priority === 'medium' ? '#ff8c00' : 'var(--primary)'
-                                                        }} />
-                                                    ))}
-                                                    {dayTasks.length > 3 && <span style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>+{dayTasks.length - 3}</span>}
-                                                </div>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                        <CalendarView
+                            calendarMonth={calendarMonth}
+                            calendarYear={calendarYear}
+                            prevMonth={prevMonth}
+                            nextMonth={nextMonth}
+                            MONTH_NAMES={MONTH_NAMES}
+                            getDaysInMonth={getDaysInMonth}
+                            getFirstDayOfMonth={getFirstDayOfMonth}
+                            getTasksForDate={getTasksForDate}
+                            onSelectDayTasks={setCalendarDayTasks}
+                        />
                     )}
 
                     {!['important', 'planned', 'today'].includes(activeListId) && (
                         <div className="create-task-wrapper">
                             <div className="add-task-box">
-                                <Add sx={{fontSize:'24px',color:'var(--primary)'}} />
+                                <Add sx={{ fontSize: '24px', color: 'var(--primary)' }} />
                                 <input
                                     ref={taskInputRef}
                                     type="text"
@@ -533,7 +460,7 @@ function App() {
                                         onClick={() => setTemplateDropdownOpen(!templateDropdownOpen)}
                                         style={{ fontSize: '0.85rem', padding: '6px 12px' }}
                                     >
-                                        <SaveIcon sx={{fontSize:'14px'}} /> Use Template
+                                        <SaveIcon sx={{ fontSize: '14px' }} /> Use Template
                                     </button>
                                     {templateDropdownOpen && (
                                         <div className="glass" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 50, marginTop: '4px', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden', minWidth: '200px' }}>
@@ -564,7 +491,7 @@ function App() {
                                                         onClick={(e) => { e.stopPropagation(); deleteTemplate(idx); }}
                                                         style={{ background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer', padding: '2px' }}
                                                     >
-                                                        <Delete sx={{fontSize:'12px'}} />
+                                                        <Delete sx={{ fontSize: '12px' }} />
                                                     </button>
                                                 </button>
                                             ))}
@@ -576,217 +503,32 @@ function App() {
                     )}
 
                     <div className="task-items-list" style={{ display: viewMode === 'kanban' ? 'flex' : 'block', gap: '20px', overflowX: viewMode === 'kanban' ? 'auto' : 'hidden', paddingBottom: '20px' }}>
-
                         {viewMode === 'kanban' ? (
-                            ['todo', 'in_progress', 'done'].map(status => (
-                                <div
-                                    key={status}
-                                    className="kanban-column glass"
-                                    style={{ flex: '0 0 350px', display: 'flex', flexDirection: 'column', gap: '10px', padding: '16px', borderRadius: '16px', background: 'var(--glass-bg)', border: '1px solid var(--border-color)', minHeight: '400px' }}
-                                    onDrop={(e) => handleDrop(e, status)}
-                                    onDragOver={handleDragOver}
-                                >
-                                    <h3 style={{ textTransform: 'capitalize', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-primary)' }}>
-                                        {status.replace('_', ' ')}
-                                        <span style={{ fontSize: '0.8rem', background: 'var(--primary-light)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '12px' }}>
-                                            {sortedFilteredTasks.filter(t => (t.status || 'todo') === status).length}
-                                        </span>
-                                    </h3>
-                                    <div className="kanban-tasks" style={{ display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '100%' }}>
-                                        <AnimatePresence>
-                                            {sortedFilteredTasks.filter(t => (t.status || 'todo') === status).map(task => {
-                                                const isBlocked = task.blockedBy?.length > 0 && task.blockedBy.some(blockerId => {
-                                                    const blocker = tasks.find(bx => (bx._id || bx.id) === blockerId);
-                                                    return blocker && !blocker.completed;
-                                                });
-                                                return (
-                                                    <motion.div
-                                                        layout
-                                                        initial={{ opacity: 0, y: 10 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        exit={{ opacity: 0, scale: 0.9 }}
-                                                        key={task._id || task.id}
-                                                        draggable
-                                                        onDragStart={(e) => handleDragStart(e, task._id || task.id)}
-                                                        onClick={() => setSelectedTaskId(task._id || task.id)}
-                                                        className={`task-item kanban-card ${selectedTaskId === (task._id || task.id) ? 'selected' : ''}`}
-                                                        style={{ padding: '16px', borderRadius: '12px', background: 'var(--bg-color)', border: getDueStatus(task) === 'overdue' ? '1px solid #ff4d4f' : getDueStatus(task) === 'today' ? '1px solid #ff8c00' : getDueStatus(task) === 'soon' ? '1px solid #ffd700' : '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', cursor: 'grab', display: 'block', opacity: isBlocked ? 0.6 : 1 }}
-                                                    >
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                                                            <span className="task-title" style={{ fontWeight: '600', fontSize: '1rem', textDecoration: task.completed ? 'line-through' : 'none', color: task.completed ? 'var(--text-secondary)' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                {isBlocked && <Lock sx={{fontSize:'14px',color:'#ff4d4f'}} />}
-                                                                {task.title}
-                                                            </span>
-                                                            <Tooltip title="Delete">
-                                                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); deleteTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }}>
-                                                                    <Delete sx={{fontSize:16}} />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                        </div>
-
-                                                        <div className="task-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-                                                            {task.priority !== 'low' && (
-                                                                <span className={`priority-badge ${task.priority}`} style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{task.priority}</span>
-                                                            )}
-                                                            {task.dueDate && (
-                                                                <span className="task-date" style={{ fontSize: '0.75rem', color: getDueStatus(task) === 'overdue' ? '#ff4d4f' : getDueStatus(task) === 'today' ? '#ff8c00' : getDueStatus(task) === 'soon' ? '#d4a017' : 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', background: getDueStatus(task) === 'overdue' ? 'rgba(255, 77, 79, 0.1)' : getDueStatus(task) === 'today' ? 'rgba(255, 140, 0, 0.1)' : getDueStatus(task) === 'soon' ? 'rgba(255, 215, 0, 0.15)' : 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>
-                                                                    <CalendarMonth sx={{fontSize:'10px'}} />
-                                                                    {new Date(task.dueDate).toLocaleDateString()}
-                                                                </span>
-                                                            )}
-                                                            {task.subtasks?.length > 0 && (
-                                                                <div className="subtask-progress" style={{ width: '100%', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                    <div style={{ flex: 1, height: '4px', background: 'var(--border-color)', borderRadius: '2px', overflow: 'hidden' }}>
-                                                                        <div style={{ width: `${(task.subtasks.filter(s => s.completed).length / task.subtasks.length) * 100}%`, height: '100%', background: task.subtasks.filter(s => s.completed).length === task.subtasks.length ? '#52c41a' : 'var(--primary)', transition: 'width 0.3s' }} />
-                                                                    </div>
-                                                                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>{task.subtasks.filter(s => s.completed).length}/{task.subtasks.length}</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </motion.div>
-                                                )
-                                            })}
-                                        </AnimatePresence>
-                                        {sortedFilteredTasks.filter(t => (t.status || 'todo') === status).length === 0 && (
-                                            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', border: '1px dashed var(--border-color)', borderRadius: '12px' }}>
-                                                Drop tasks here
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
+                            <KanbanBoard
+                                sortedFilteredTasks={sortedFilteredTasks}
+                                tasks={tasks}
+                                selectedTaskId={selectedTaskId}
+                                onSelectTask={setSelectedTaskId}
+                                onDeleteTask={deleteTask}
+                                getDueStatus={getDueStatus}
+                                handleDragStart={handleDragStart}
+                                handleDrop={handleDrop}
+                                handleDragOver={handleDragOver}
+                            />
                         ) : (
-                            <AnimatePresence mode="popLayout">
-                                {sortedFilteredTasks.length > 0 ? (
-                                    sortedFilteredTasks.map(task => {
-                                        const isBlocked = task.blockedBy?.length > 0 && task.blockedBy.some(blockerId => {
-                                            const blocker = tasks.find(bx => (bx._id || bx.id) === blockerId);
-                                            return blocker && !blocker.completed;
-                                        });
-                                        return (
-                                            <motion.div
-                                                layout
-                                                initial={{ opacity: 0, scale: 0.98 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                exit={{ opacity: 0, scale: 0.95 }}
-                                                whileHover={{ scale: 1.01 }}
-                                                key={task._id || task.id}
-                                                onClick={() => setSelectedTaskId(task._id || task.id)}
-                                                className={`task-item ${task.completed ? 'completed' : ''} ${selectedTaskId === (task._id || task.id) ? 'selected' : ''}`}
-                                                style={{ opacity: isBlocked ? 0.6 : 1, borderLeft: getDueStatus(task) === 'overdue' ? '3px solid #ff4d4f' : getDueStatus(task) === 'today' ? '3px solid #ff8c00' : getDueStatus(task) === 'soon' ? '3px solid #ffd700' : undefined }}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={bulkSelection.includes(task._id || task.id)}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    onChange={() => toggleBulkSelect(task._id || task.id)}
-                                                    style={{ marginRight: '8px', cursor: 'pointer', accentColor: 'var(--primary)' }}
-                                                />
-                                                <button
-                                                    className="check-btn"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (isBlocked) {
-                                                            toast.error('This task is blocked by another task!');
-                                                            return;
-                                                        }
-                                                        toggleTask(task._id || task.id);
-                                                    }}
-                                                    style={{ cursor: isBlocked ? 'not-allowed' : 'pointer' }}
-                                                >
-                                                    {isBlocked ? (
-                                                        <Lock sx={{fontSize:'20px',color:'#ff4d4f'}} />
-                                                    ) : task.completed ? (
-                                                        <CheckCircle sx={{fontSize:'28px',color:'var(--primary)'}} />
-                                                    ) : (
-                                                        <RadioButtonUnchecked sx={{fontSize:'28px',color:'var(--border-color)'}} />
-                                                    )}
-                                                </button>
-                                                <div className="task-body">
-                                                    <div className="task-top">
-                                                        <span className="task-title">{task.title}</span>
-                                                        {task.priority !== 'low' && (
-                                                            <span className={`priority-badge ${task.priority}`}>
-                                                                {task.priority}
-                                                            </span>
-                                                        )}
-                                                        {getDueStatus(task) === 'overdue' && (
-                                                            <span style={{ fontSize: '0.7rem', background: '#ff4d4f', color: 'white', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                                                                <Warning sx={{fontSize:'10px'}} /> Overdue
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="task-meta">
-                                                        {task.note && <span className="task-note">{task.note.substring(0, 60)}{task.note.length > 60 ? '...' : ''}</span>}
-                                                        {task.dueDate && (
-                                                            <span className="task-date" style={{ fontSize: '0.8rem', color: getDueStatus(task) === 'overdue' ? '#ff4d4f' : getDueStatus(task) === 'today' ? '#ff8c00' : getDueStatus(task) === 'soon' ? '#d4a017' : 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', background: getDueStatus(task) === 'overdue' ? 'rgba(255, 77, 79, 0.1)' : getDueStatus(task) === 'today' ? 'rgba(255, 140, 0, 0.1)' : getDueStatus(task) === 'soon' ? 'rgba(255, 215, 0, 0.15)' : 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>
-                                                                <CalendarMonth sx={{fontSize:'12px'}} />
-                                                                {new Date(task.dueDate).toLocaleDateString()} {task.dueTime || ''}
-                                                            </span>
-                                                        )}
-                                                        {task.recurrence && task.recurrence !== 'none' && (
-                                                            <span title={`Repeats ${task.recurrence}`} style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center' }}>
-                                                                🔁
-                                                            </span>
-                                                        )}
-                                                        {task.tags?.length > 0 && (
-                                                            <div className="task-tags" style={{ display: 'flex', gap: '4px', marginLeft: '4px' }}>
-                                                                {task.tags.map(t => <span key={t} style={{ fontSize: '0.7rem', background: 'var(--primary-light)', color: 'var(--primary)', padding: '2px 6px', borderRadius: '10px' }}>#{t}</span>)}
-                                                            </div>
-                                                        )}
-                                                        {task.subtasks?.length > 0 && (
-                                                            <div className="subtask-progress" style={{ width: '100%', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                <div style={{ flex: 1, height: '6px', background: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
-                                                                    <div style={{ width: `${(task.subtasks.filter(s => s.completed).length / task.subtasks.length) * 100}%`, height: '100%', background: task.subtasks.filter(s => s.completed).length === task.subtasks.length ? '#52c41a' : 'var(--primary)', transition: 'width 0.3s' }} />
-                                                                </div>
-                                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{task.subtasks.filter(s => s.completed).length}/{task.subtasks.length}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <Stack direction="row" spacing={0.5}>
-                                                    <Tooltip title="Important">
-                                                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleImportant(task._id || task.id); }}>
-                                                            {task.important ? <Star sx={{fontSize:20,color:'primary.main'}} /> : <StarBorder sx={{fontSize:20,color:'text.secondary'}} />}
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    {!task.archived && (
-                                                        <Tooltip title="Archive">
-                                                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); archiveTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }}>
-                                                                <Archive sx={{fontSize:18,color:'text.secondary'}} />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    )}
-                                                    <Tooltip title="Delete">
-                                                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); deleteTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }}>
-                                                            <Delete sx={{fontSize:20}} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Stack>
-                                            </motion.div>
-                                        )
-                                    })
-                                ) : (
-                                    <div className="empty-state">
-                                        <motion.div
-                                            initial={{ opacity: 0, scale: 0.8 }}
-                                            animate={{ opacity: 0.5, scale: 1 }}
-                                            transition={{ duration: 1 }}
-                                            className="empty-icon"
-                                        >
-                                            <CheckCircle sx={{fontSize:'120px',color:'var(--primary)',opacity:0.3}} />
-                                        </motion.div>
-                                        <h3>Your plate is clear</h3>
-                                        <p>Enjoy the peace, or start something new.</p>
-                                        <Button variant="contained" onClick={() => {
-                                            taskInputRef.current?.focus();
-                                            taskInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                        }}>
-                                            Create your first task
-                                        </Button>
-                                    </div>
-                                )}
-                            </AnimatePresence>
+                            <TaskList
+                                sortedFilteredTasks={sortedFilteredTasks}
+                                tasks={tasks}
+                                selectedTaskId={selectedTaskId}
+                                onSelectTask={setSelectedTaskId}
+                                onToggleTask={toggleTask}
+                                onToggleImportant={toggleImportant}
+                                onArchiveTask={archiveTask}
+                                onDeleteTask={deleteTask}
+                                getDueStatus={getDueStatus}
+                                bulkSelection={bulkSelection}
+                                toggleBulkSelect={toggleBulkSelect}
+                            />
                         )}
                     </div>
                 </section>
