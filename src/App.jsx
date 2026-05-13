@@ -33,9 +33,15 @@ import SaveIcon from '@mui/icons-material/Save'
 import RadioButtonUnchecked from '@mui/icons-material/RadioButtonUnchecked'
 import Logout from '@mui/icons-material/Logout'
 import { useTasks } from './context/TaskContext'
-import NavItem from './components/ui/NavItem.jsx'
 import { GoogleLogin } from '@react-oauth/google'
 import { Toaster, toast } from 'react-hot-toast'
+import Sidebar from './components/layout/Sidebar.jsx'
+import Header from './components/layout/Header.jsx'
+import DetailPanel from './components/layout/DetailPanel.jsx'
+import DeleteListModal from './components/modals/DeleteListModal.jsx'
+import ProfileModal from './components/modals/ProfileModal.jsx'
+import CalendarDayModal from './components/modals/CalendarDayModal.jsx'
+import StatsModal from './components/modals/StatsModal.jsx'
 
 function App() {
     const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
@@ -386,184 +392,51 @@ function App() {
                 />
             )}
 
-            {/* Sidebar */}
-            <aside className={`sidebar glass ${isSidebarOpen ? 'open' : ''}`}>
-                <div className="sidebar-header">
-                    <div className="logo">
-                        <img src="/logo.png" alt="KTasks" className="sidebar-logo" />
-                        <span>KTasks</span>
-                    </div>
-                </div>
+            <Sidebar
+                isSidebarOpen={isSidebarOpen}
+                isMobile={isMobile}
+                setSidebarOpen={setSidebarOpen}
+                activeListId={activeListId}
+                setActiveListId={setActiveListId}
+                lists={lists}
+                editingListId={editingListId}
+                setEditingListId={setEditingListId}
+                editListTitle={editListTitle}
+                setEditListTitle={setEditListTitle}
+                handleUpdateList={handleUpdateList}
+                isCreatingList={isCreatingList}
+                setIsCreatingList={setIsCreatingList}
+                newListTitle={newListTitle}
+                setNewListTitle={setNewListTitle}
+                handleAddList={handleAddList}
+                setListToDelete={setListToDelete}
+                addList={addList}
+            />
 
-                <nav className="sidebar-nav">
-                    <NavItem icon={<Star sx={{fontSize:'22px'}} />} label="Important" active={activeListId === 'important'} onClick={() => setActiveListId('important')} />
-                    <NavItem icon={<WbSunny sx={{fontSize:'22px'}} />} label="Today" active={activeListId === 'today'} onClick={() => setActiveListId('today')} />
-                    <NavItem icon={<CalendarToday sx={{fontSize:'22px'}} />} label="Planned" active={activeListId === 'planned'} onClick={() => setActiveListId('planned')} />
-
-                    <div className="nav-divider"></div>
-
-                    <div className="nav-section">
-                        <header>My Lists</header>
-                        {lists.map(list => {
-                            const listId = String(list._id || list.id);
-                            return (
-                                <div key={listId} className="nav-item-wrapper">
-                                    {String(editingListId) === listId ? (
-                                        <div className="nav-item editing">
-                                            <Add sx={{fontSize:'22px'}} className="rotate-45" />
-                                            <input
-                                                autoFocus
-                                                value={editListTitle}
-                                                onChange={(e) => setEditListTitle(e.target.value)}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleUpdateList(listId)}
-                                                onBlur={() => setEditingListId(null)}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <NavItem
-                                            label={list.name}
-                                            active={String(activeListId) === listId}
-                                            onClick={() => {
-                                                setActiveListId(listId);
-                                                if (isMobile) setSidebarOpen(false);
-                                            }}
-                                            actions={
-                                                <Stack direction="row" spacing={0.5}>
-                                                    <Tooltip title="Edit list">
-                                                        <IconButton size="small" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingListId(listId); setEditListTitle(list.name); }}>
-                                                            <ChevronRight sx={{fontSize:14}} className="rotate-90" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title="Delete list">
-                                                        <IconButton size="small" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setListToDelete(listId); }}>
-                                                            <Delete sx={{fontSize:14}} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Stack>
-                                            }
-                                        />
-                                    )}
-                                </div>
-                            );
-                        })}
-                        {isCreatingList && (
-                            <Paper sx={{ p: 2, mb: 1 }}>
-                                <TextField
-                                    autoFocus
-                                    fullWidth
-                                    size="small"
-                                    placeholder="Enter list name..."
-                                    value={newListTitle}
-                                    onChange={(e) => setNewListTitle(e.target.value)}
-                                    onKeyDown={handleAddList}
-                                    sx={{ mb: 1 }}
-                                />
-                                <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                    <Button size="small" variant="outlined" onClick={() => setIsCreatingList(false)}>Cancel</Button>
-                                    <Button size="small" variant="contained" onClick={() => {
-                                        if (newListTitle.trim()) {
-                                            addList(newListTitle);
-                                            setNewListTitle('');
-                                            setIsCreatingList(false);
-                                        } else {
-                                            toast.error('Name required');
-                                        }
-                                    }}>Add List</Button>
-                                </Stack>
-                            </Paper>
-                        )}
-                    </div>
-                </nav>
-
-                {!isCreatingList && (
-                    <Button fullWidth variant="text" startIcon={<Add />} onClick={() => setIsCreatingList(true)} sx={{ justifyContent: 'flex-start', px: 2 }}>
-                        Create New List
-                    </Button>
-                )}
-
-                <div className="sidebar-footer">
-                    <div className="developer-credit">
-                        <span className="label">Developed by</span>
-                        <span className="name">Watcharapong Namsaeng</span>
-                    </div>
-                </div>
-            </aside>
-
-            {/* Main content */}
             <main className="main-content">
-                <header className="main-header">
-                    <div className="header-left">
-                        <IconButton onClick={() => setSidebarOpen(!isSidebarOpen)}>
-                            <Menu />
-                        </IconButton>
-                        <h1>
-                            {activeListId === 'important' ? 'Important' :
-                                activeListId === 'planned' ? 'Planned' :
-                                    (activeList?.name || 'My Tasks')}
-                        </h1>
-                    </div>
-
-                    <Stack direction="row" spacing={1} alignItems="center">
-                        <TextField
-                            size="small"
-                            placeholder="Search..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start"><Search sx={{fontSize:18}} /></InputAdornment>
-                                ),
-                            }}
-                            sx={{ width: 180 }}
-                        />
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                            <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)} displayEmpty>
-                                <MenuItem value="date_desc">Newest First</MenuItem>
-                                <MenuItem value="due_date_asc">Due Date (Soonest)</MenuItem>
-                                <MenuItem value="due_date_desc">Due Date (Latest)</MenuItem>
-                                <MenuItem value="priority">Priority</MenuItem>
-                                <MenuItem value="alphabetical">A-Z</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <Tooltip title={showCompleted ? 'Hide completed' : 'Show completed'}>
-                            <IconButton onClick={() => setShowCompleted(!showCompleted)}>
-                                {showCompleted ? <Visibility sx={{fontSize:20}} /> : <VisibilityOff sx={{fontSize:20}} />}
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Calendar">
-                            <IconButton onClick={() => setCalendarOpen(!calendarOpen)}>
-                                <GridView sx={{fontSize:20}} />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Statistics">
-                            <IconButton onClick={() => setStatsOpen(true)}>
-                                <BarChart sx={{fontSize:20}} />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title={showArchived ? 'Hide archived' : 'Show archived'}>
-                            <IconButton onClick={() => setShowArchived(!showArchived)}>
-                                <Archive sx={{fontSize:20,color:showArchived ? 'primary.main' : 'inherit'}} />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Toggle View">
-                            <IconButton onClick={() => setViewMode(viewMode === 'list' ? 'kanban' : 'list')}>
-                                {viewMode === 'list' ? <ViewColumn sx={{fontSize:20}} /> : <FormatListBulleted sx={{fontSize:20}} />}
-                            </IconButton>
-                        </Tooltip>
-                        <Button variant="outlined" size="small" onClick={toggleTheme} startIcon={theme === 'light' ? <AccessTime /> : <Star />}>
-                            {theme === 'light' ? 'Dark' : 'Light'}
-                        </Button>
-                        <Stack direction="row" alignItems="center" spacing={1} sx={{ cursor: 'pointer' }} onClick={() => setProfileOpen(true)}>
-                            <Box textAlign="right">
-                                <Typography variant="body2">{user?.name || 'User'}</Typography>
-                                <Typography variant="caption" color="primary" fontWeight="bold">Level {user?.level || 1}</Typography>
-                            </Box>
-                            <Badge overlap="circular">
-                                {user?.picture ? <img src={user.picture} alt="Avatar" style={{ width:36, height:36, borderRadius:'50%' }} /> : <Person sx={{fontSize:36}} />}
-                            </Badge>
-                        </Stack>
-                    </Stack>
-                </header>
+                <Header
+                    isSidebarOpen={isSidebarOpen}
+                    setSidebarOpen={setSidebarOpen}
+                    activeListId={activeListId}
+                    activeList={activeList}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    sortBy={sortBy}
+                    setSortBy={setSortBy}
+                    showCompleted={showCompleted}
+                    setShowCompleted={setShowCompleted}
+                    calendarOpen={calendarOpen}
+                    setCalendarOpen={setCalendarOpen}
+                    setStatsOpen={setStatsOpen}
+                    showArchived={showArchived}
+                    setShowArchived={setShowArchived}
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                    theme={theme}
+                    toggleTheme={toggleTheme}
+                    user={user}
+                    setProfileOpen={setProfileOpen}
+                />
 
                 <section className="task-list-container">
                     {bulkSelection.length > 0 && (
@@ -919,332 +792,56 @@ function App() {
                 </section>
             </main>
 
-            {/* Detail Panel */}
-            {selectedTask && (
-                <Paper className={`detail-panel ${selectedTaskId ? 'open' : ''}`} sx={{ position:'fixed', top:0, right:0, width:380, height:'100vh', p:3, overflowY:'auto', zIndex:100, borderRadius:0 }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                        <Typography variant="h6">Task Details</Typography>
-                        <IconButton onClick={() => setSelectedTaskId(null)}><ChevronRight /></IconButton>
-                    </Stack>
+            <DetailPanel
+                selectedTask={selectedTask}
+                selectedTaskId={selectedTaskId}
+                onClose={() => setSelectedTaskId(null)}
+                updateTaskState={updateTaskState}
+                activeTimerTaskId={activeTimerTaskId}
+                timerSeconds={timerSeconds}
+                handleStopTimer={handleStopTimer}
+                setActiveTimerTaskId={setActiveTimerTaskId}
+                setTimerSeconds={setTimerSeconds}
+                setPriority={setPriority}
+                activeTasks={activeTasks}
+                templateFormOpen={templateFormOpen}
+                setTemplateFormOpen={setTemplateFormOpen}
+                templateName={templateName}
+                setTemplateName={setTemplateName}
+                addTemplate={addTemplate}
+                subtaskInput={subtaskInput}
+                setSubtaskInput={setSubtaskInput}
+                addSubtask={addSubtask}
+                toggleSubtask={toggleSubtask}
+                handleAddSubtask={handleAddSubtask}
+                updateNote={updateNote}
+            />
 
-                    <div className="detail-content">
-                        <Box mb={2}>
-                            <TextField
-                                fullWidth
-                                variant="standard"
-                                value={selectedTask.title || ""}
-                                onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { title: e.target.value })}
-                                InputProps={{ style: { fontSize: '1.3rem', fontWeight: 600 } }}
-                            />
-                        </Box>
+            <DeleteListModal
+                listToDelete={listToDelete}
+                onClose={() => setListToDelete(null)}
+                onDelete={deleteList}
+            />
 
-                        <Box mb={2}>
-                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><CalendarToday fontSize="small" /> Due Date & Time</Typography>
-                            <Stack direction="row" spacing={1}>
-                                <TextField type="date" size="small" fullWidth value={selectedTask.dueDate ? new Date(selectedTask.dueDate).toISOString().split('T')[0] : ''} onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { dueDate: e.target.value })} />
-                                <TextField type="time" size="small" fullWidth value={selectedTask.dueTime || ''} onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { dueTime: e.target.value })} />
-                            </Stack>
-                        </Box>
+            <ProfileModal
+                open={isProfileOpen}
+                user={user}
+                onClose={() => setProfileOpen(false)}
+                onLogout={logout}
+            />
 
-                        <Box mb={2}>
-                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><CalendarToday fontSize="small" /> Recurrence</Typography>
-                            <FormControl fullWidth size="small">
-                                <Select value={selectedTask.recurrence || 'none'} onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { recurrence: e.target.value })}>
-                                    <MenuItem value="none">Does not repeat</MenuItem>
-                                    <MenuItem value="daily">Daily</MenuItem>
-                                    <MenuItem value="weekly">Weekly</MenuItem>
-                                    <MenuItem value="monthly">Monthly</MenuItem>
-                                    <MenuItem value="yearly">Yearly</MenuItem>
-                                </Select>
-                            </FormControl>
-                            {selectedTask.recurrence === 'weekly' && (
-                                <Box mt={1.5}>
-                                    <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>Repeat on</Typography>
-                                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                                        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((day, idx) => (
-                                            <Button key={day} size="small" variant={selectedTask.recurrenceDayOfWeek === idx ? 'contained' : 'outlined'} onClick={() => updateTaskState(selectedTask._id || selectedTask.id, { recurrenceDayOfWeek: idx })}>{day}</Button>
-                                        ))}
-                                    </Stack>
-                                </Box>
-                            )}
-                        </Box>
+            <CalendarDayModal
+                calendarDayTasks={calendarDayTasks}
+                onClose={() => setCalendarDayTasks(null)}
+                onSelectTask={setSelectedTaskId}
+                onToggleTask={toggleTask}
+            />
 
-                        <Box mb={2}>
-                            <Typography variant="body2" color="text.secondary" mb={1}>Tags</Typography>
-                            <Stack direction="row" flexWrap="wrap" gap={0.5} mb={1}>
-                                {(selectedTask.tags || []).map(tag => (
-                                    <Chip key={tag} label={`#${tag}`} color="primary" size="small" onDelete={() => {
-                                        const newTags = (selectedTask.tags || []).filter(t => t !== tag);
-                                        updateTaskState(selectedTask._id || selectedTask.id, { tags: newTags });
-                                    }} />
-                                ))}
-                            </Stack>
-                            <TextField
-                                size="small"
-                                fullWidth
-                                placeholder="Add tag and press Enter"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && e.target.value.trim() !== '') {
-                                        const t = e.target.value.trim();
-                                        if (!(selectedTask.tags || []).includes(t)) {
-                                            const newTags = [...(selectedTask.tags || []), t];
-                                            updateTaskState(selectedTask._id || selectedTask.id, { tags: newTags });
-                                        }
-                                        e.target.value = '';
-                                    }
-                                }}
-                            />
-                        </Box>
-
-                        <Box mb={2}>
-                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><Star fontSize="small" /> Priority</Typography>
-                            <Stack direction="row" spacing={1}>
-                                {['low','medium','high'].map(p => (
-                                    <Button key={p} size="small" variant={selectedTask.priority === p ? 'contained' : 'outlined'} color={p === 'high' ? 'error' : p === 'medium' ? 'warning' : 'info'} onClick={() => setPriority(selectedTask._id || selectedTask.id, p)}>
-                                        {p}
-                                    </Button>
-                                ))}
-                            </Stack>
-                        </Box>
-
-                        <Box mb={2}>
-                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><Link fontSize="small" /> Blocked By</Typography>
-                            <FormControl fullWidth size="small">
-                                <Select value={selectedTask.blockedBy?.[0] || ''} onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { blockedBy: e.target.value ? [e.target.value] : [] })}>
-                                    <MenuItem value="">None</MenuItem>
-                                    {activeTasks.filter(t => (t._id || t.id) !== (selectedTask._id || selectedTask.id)).map(t => (
-                                        <MenuItem key={t._id || t.id} value={t._id || t.id}>{t.title}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Box>
-
-                        <Box mb={2}>
-                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><AccessTime fontSize="small" /> Focus Pomodoro Timer</Typography>
-                            <Paper sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: activeTimerTaskId === (selectedTask._id || selectedTask.id) ? '1px solid' : undefined, borderColor: 'error.light' }}>
-                                {activeTimerTaskId === (selectedTask._id || selectedTask.id) ? (
-                                    <>
-                                        <Box>
-                                            <Typography variant="caption" color="error" fontWeight="bold" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>Tracking Focus</Typography>
-                                            <Typography variant="h4" fontWeight="bold" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                {String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:{String(timerSeconds % 60).padStart(2, '0')}
-                                            </Typography>
-                                        </Box>
-                                        <Button variant="contained" color="error" onClick={handleStopTimer}>Stop Focus</Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary">Total Time Logged</Typography>
-                                            <Typography variant="h6">{Math.floor((selectedTask.timeSpent || 0) / 60)}m {(selectedTask.timeSpent || 0) % 60}s</Typography>
-                                        </Box>
-                                        <Button variant="contained" onClick={() => {
-                                            if (activeTimerTaskId) handleStopTimer();
-                                            setActiveTimerTaskId(selectedTask._id || selectedTask.id);
-                                            setTimerSeconds(0);
-                                        }}>Start Focus</Button>
-                                    </>
-                                )}
-                            </Paper>
-                        </Box>
-
-                        <Box mb={2}>
-                            {!templateFormOpen ? (
-                                <Button fullWidth variant="outlined" color="primary" startIcon={<SaveIcon />} onClick={() => setTemplateFormOpen(true)}>Save as Template</Button>
-                            ) : (
-                                <Stack direction="row" spacing={1}>
-                                    <TextField autoFocus size="small" placeholder="Template name..." value={templateName} onChange={(e) => setTemplateName(e.target.value)} onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && templateName.trim()) {
-                                            addTemplate({ name: templateName.trim(), title: selectedTask.title, note: selectedTask.note, priority: selectedTask.priority, dueTime: selectedTask.dueTime, recurrence: selectedTask.recurrence, recurrenceDayOfWeek: selectedTask.recurrenceDayOfWeek, tags: selectedTask.tags, important: selectedTask.important });
-                                            setTemplateName('');
-                                            setTemplateFormOpen(false);
-                                        }
-                                    }} sx={{ flex: 1 }} />
-                                    <IconButton onClick={() => { setTemplateFormOpen(false); setTemplateName(''); }}><Close /></IconButton>
-                                </Stack>
-                            )}
-                        </Box>
-
-                        <Box mb={2}>
-                            <Typography variant="body2" color="text.secondary" mb={1} display="flex" alignItems="center" gap={0.5}><CalendarToday fontSize="small" /> Subtasks</Typography>
-                            <Stack spacing={0.5} mb={1}>
-                                {selectedTask.subtasks?.map(st => (
-                                    <Stack key={st._id || st.id} direction="row" alignItems="center" spacing={1}>
-                                        <IconButton size="small" onClick={() => toggleSubtask(selectedTask._id || selectedTask.id, st._id || st.id)}>
-                                            {st.completed ? <CheckCircle sx={{color:'primary.main'}} /> : <RadioButtonUnchecked />}
-                                        </IconButton>
-                                        <Typography sx={{ textDecoration: st.completed ? 'line-through' : 'none', color: st.completed ? 'text.secondary' : 'text.primary' }}>{st.title}</Typography>
-                                    </Stack>
-                                ))}
-                                <TextField size="small" placeholder="Next step..." value={subtaskInput} onChange={(e) => setSubtaskInput(e.target.value)} onKeyDown={handleAddSubtask} />
-                            </Stack>
-                        </Box>
-
-                        <Box mb={2}>
-                            <Typography variant="body2" color="text.secondary" mb={1}>Notes</Typography>
-                            <TextField
-                                fullWidth
-                                multiline
-                                rows={3}
-                                placeholder="Additional context..."
-                                value={selectedTask.note}
-                                onChange={(e) => updateNote(selectedTask._id || selectedTask.id, e.target.value)}
-                            />
-                        </Box>
-                    </div>
-                </Paper>
-            )}
-
-            {/* Delete List Modal */}
-            <Dialog open={!!listToDelete} onClose={() => setListToDelete(null)} maxWidth="xs" fullWidth>
-                <DialogContent sx={{ textAlign: 'center', py: 4 }}>
-                    <Box sx={{ background: 'rgba(255, 77, 79, 0.1)', p: 2, borderRadius: '50%', display: 'inline-flex', mb: 2 }}>
-                        <Delete sx={{fontSize:40,color:'error.main'}} />
-                    </Box>
-                    <Typography variant="h5" fontWeight={600} mb={1}>Delete List?</Typography>
-                    <Typography color="text.secondary" mb={3}>Are you sure you want to delete this list and all of its tasks? This action <strong>cannot be undone</strong>.</Typography>
-                    <Stack direction="row" spacing={2}>
-                        <Button fullWidth variant="outlined" onClick={() => setListToDelete(null)}>Cancel</Button>
-                        <Button fullWidth variant="contained" color="error" onClick={() => { deleteList(listToDelete); setListToDelete(null); }}>Yes, Delete</Button>
-                    </Stack>
-                </DialogContent>
-            </Dialog>
-
-            {/* Gamification Profile Modal */}
-            <Dialog open={isProfileOpen && !!user} onClose={() => setProfileOpen(false)} maxWidth="xs" fullWidth>
-                {user && (
-                    <DialogContent sx={{ p: 4 }}>
-                        <Stack direction="row" alignItems="center" spacing={2} mb={4}>
-                            <img src={user.picture || ''} alt="Avatar" style={{ width: 80, height: 80, borderRadius: '50%', border: '4px solid var(--primary)' }} />
-                            <Box>
-                                <Typography variant="h4" fontWeight="bold">{user.name}</Typography>
-                                <Typography variant="h6" color="warning.main" fontWeight="bold">Level {user.level || 1}!</Typography>
-                            </Box>
-                        </Stack>
-
-                        <Box mb={3}>
-                            <Stack direction="row" justifyContent="space-between" mb={1}>
-                                <Typography variant="body2" fontWeight={600}>XP Progress</Typography>
-                                <Typography variant="body2">{user.xp || 0} / {(user.level || 1) * 100} XP</Typography>
-                            </Stack>
-                            <Box sx={{ background: 'var(--border-color)', height: 16, borderRadius: 2, overflow: 'hidden' }}>
-                                <Box sx={{ background: 'linear-gradient(90deg, #ffd700, #ff8c00)', height: '100%', width: `${Math.min(((user.xp || 0) / ((user.level || 1) * 100)) * 100, 100)}%`, transition: 'width 0.5s ease-out' }} />
-                            </Box>
-                        </Box>
-
-                        <Box mb={4}>
-                            <Typography variant="h6" mb={2} display="flex" alignItems="center" gap={1}>
-                                <Star sx={{color:'#ffd700'}} /> Achievements & Badges
-                            </Typography>
-                            <Stack direction="row" flexWrap="wrap" gap={1}>
-                                {user.badges && user.badges.length > 0 ? (
-                                    user.badges.map(b => <Chip key={b} label={b} color="warning" variant="outlined" />)
-                                ) : (
-                                    <Paper sx={{ p: 2, width: '100%', textAlign: 'center' }}>
-                                        <Typography color="text.secondary" variant="body2">No badges yet. Keep crushing those tasks!</Typography>
-                                    </Paper>
-                                )}
-                            </Stack>
-                        </Box>
-
-                        <Button fullWidth variant="outlined" onClick={logout} startIcon={<Logout />}>Logout of KTasks</Button>
-                    </DialogContent>
-                )}
-            </Dialog>
-
-            {/* Calendar Day Tasks Modal */}
-            <Dialog open={!!calendarDayTasks} onClose={() => setCalendarDayTasks(null)} maxWidth="sm" fullWidth>
-                {calendarDayTasks && (
-                    <DialogContent sx={{ maxHeight: '80vh', overflowY: 'auto' }}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                            <Typography variant="h6">{calendarDayTasks.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Typography>
-                            <IconButton onClick={() => setCalendarDayTasks(null)}><Close /></IconButton>
-                        </Stack>
-                        <Stack spacing={1}>
-                            {calendarDayTasks.tasks.map(task => (
-                                <Paper
-                                    key={task._id || task.id}
-                                    onClick={() => { setSelectedTaskId(task._id || task.id); setCalendarDayTasks(null); }}
-                                    sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', opacity: task.completed ? 0.6 : 1 }}
-                                >
-                                    <IconButton onClick={(e) => { e.stopPropagation(); toggleTask(task._id || task.id); }}>
-                                        {task.completed ? <CheckCircle sx={{color:'primary.main'}} /> : <RadioButtonUnchecked />}
-                                    </IconButton>
-                                    <Box flex={1}>
-                                        <Typography sx={{ textDecoration: task.completed ? 'line-through' : 'none', fontWeight: 500 }}>{task.title}</Typography>
-                                        {task.dueTime && <Typography variant="caption" color="text.secondary">{task.dueTime}</Typography>}
-                                    </Box>
-                                    {task.priority !== 'low' && (
-                                        <Chip label={task.priority} size="small" color={task.priority === 'high' ? 'error' : 'warning'} />
-                                    )}
-                                </Paper>
-                            ))}
-                        </Stack>
-                    </DialogContent>
-                )}
-            </Dialog>
-
-            {/* Statistics Dashboard Modal */}
-            <Dialog open={statsOpen} onClose={() => setStatsOpen(false)} maxWidth="sm" fullWidth>
-                <DialogContent sx={{ maxHeight: '85vh', overflowY: 'auto' }}>
-                    {(() => {
-                        const stats = getStats();
-                        const maxCount = Math.max(...stats.weekData.map(d => d.count), 1);
-                        return (
-                            <>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-                                    <Typography variant="h5" display="flex" alignItems="center" gap={1}>
-                                        <BarChart sx={{color:'primary.main'}} /> Statistics
-                                    </Typography>
-                                    <IconButton onClick={() => setStatsOpen(false)}><Close /></IconButton>
-                                </Stack>
-
-                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5, mb: 3 }}>
-                                    <Paper sx={{ p: 2, textAlign: 'center' }}>
-                                        <Typography variant="h3" fontWeight="bold" color="primary">{stats.completed}</Typography>
-                                        <Typography variant="body2" color="text.secondary">Completed</Typography>
-                                    </Paper>
-                                    <Paper sx={{ p: 2, textAlign: 'center' }}>
-                                        <Typography variant="h3" fontWeight="bold" color="primary">{stats.total}</Typography>
-                                        <Typography variant="body2" color="text.secondary">Total Tasks</Typography>
-                                    </Paper>
-                                    <Paper sx={{ p: 2, textAlign: 'center' }}>
-                                        <Typography variant="h3" fontWeight="bold" color="warning.main">{stats.completionRate}%</Typography>
-                                        <Typography variant="body2" color="text.secondary">Completion Rate</Typography>
-                                    </Paper>
-                                    <Paper sx={{ p: 2, textAlign: 'center' }}>
-                                        <Typography variant="h3" fontWeight="bold" color="error.main">{stats.streak}</Typography>
-                                        <Typography variant="body2" color="text.secondary">Day Streak</Typography>
-                                    </Paper>
-                                </Box>
-
-                                <Paper sx={{ p: 2, mb: 2.5 }}>
-                                    <Stack direction="row" alignItems="center" gap={1} mb={1.5}>
-                                        <AccessTime sx={{color:'primary.main'}} />
-                                        <Typography fontWeight={600}>Total Focus Time</Typography>
-                                    </Stack>
-                                    <Typography variant="h4" fontWeight="bold">{Math.floor(stats.totalFocus / 3600)}h {Math.floor((stats.totalFocus % 3600) / 60)}m</Typography>
-                                </Paper>
-
-                                <Paper sx={{ p: 2 }}>
-                                    <Typography variant="h6" mb={2}>Last 7 Days</Typography>
-                                    <Stack direction="row" alignItems="flex-end" gap={1} height={120}>
-                                        {stats.weekData.map((d, i) => (
-                                            <Box key={i} flex={1} display="flex" flexDirection="column" alignItems="center" gap={0.75}>
-                                                <Box sx={{ width: '100%', background: 'var(--border-color)', borderRadius: 1.5, height: '100%', position: 'relative', overflow: 'hidden' }}>
-                                                    <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${(d.count / maxCount) * 100}%`, background: 'linear-gradient(180deg, var(--primary), #6b8eff)', borderRadius: 1.5, transition: 'height 0.5s ease-out', minHeight: d.count > 0 ? '4px' : 0 }} />
-                                                </Box>
-                                                <Typography variant="caption" color="text.secondary">{d.label}</Typography>
-                                                <Typography variant="caption" fontWeight="bold">{d.count}</Typography>
-                                            </Box>
-                                        ))}
-                                    </Stack>
-                                </Paper>
-                            </>
-                        );
-                    })()}
-                </DialogContent>
-            </Dialog>
+            <StatsModal
+                open={statsOpen}
+                onClose={() => setStatsOpen(false)}
+                stats={getStats()}
+            />
         </div>
     );
 }
