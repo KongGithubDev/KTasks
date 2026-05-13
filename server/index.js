@@ -88,16 +88,54 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 
 app.patch('/api/auth/me', authenticateToken, async (req, res) => {
     try {
-        const { xp, level, badges } = req.body;
+        const { xp, level, badges, templates } = req.body;
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         if (xp !== undefined) user.xp = xp;
         if (level !== undefined) user.level = level;
         if (badges !== undefined) user.badges = badges;
+        if (templates !== undefined) user.templates = templates;
 
         await user.save();
         res.json(user);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// --- TEMPLATE ROUTES ---
+
+app.get('/api/templates', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        res.json(user.templates || []);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+app.post('/api/templates', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        const { name, title, note, priority, dueTime, recurrence, recurrenceDayOfWeek, tags, important } = req.body;
+        const newTemplate = { name, title, note, priority, dueTime, recurrence, recurrenceDayOfWeek, tags: tags || [], important: !!important };
+        user.templates.push(newTemplate);
+        await user.save();
+        res.status(201).json(user.templates[user.templates.length - 1]);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+app.delete('/api/templates/:idx', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        const idx = parseInt(req.params.idx);
+        if (idx < 0 || idx >= user.templates.length) return res.status(404).json({ message: 'Template not found' });
+        user.templates.splice(idx, 1);
+        await user.save();
+        res.json({ message: 'Template deleted' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -133,14 +171,15 @@ app.post('/api/lists', authenticateToken, async (req, res) => {
 app.patch('/api/lists/:id', authenticateToken, async (req, res) => {
     try {
         const { name, icon, color, defaultView } = req.body;
+        const updates = {};
+        if (name !== undefined) updates.name = name;
+        if (icon !== undefined) updates.icon = icon;
+        if (color !== undefined) updates.color = color;
+        if (defaultView !== undefined) updates.defaultView = defaultView;
+
         const list = await List.findOneAndUpdate(
             { _id: req.params.id, userId: req.user.id },
-            {
-                name,
-                icon: icon || 'List',
-                color: color || '',
-                defaultView: defaultView || 'list'
-            },
+            updates,
             { new: true }
         );
         if (!list) return res.status(404).json({ message: 'List not found or unauthorized' });
@@ -166,7 +205,10 @@ app.delete('/api/lists/:id', authenticateToken, async (req, res) => {
 
 app.get('/api/tasks', authenticateToken, async (req, res) => {
     try {
-        const tasks = await Task.find({ userId: req.user.id });
+        const includeArchived = req.query.archived === 'true';
+        const filter = { userId: req.user.id };
+        if (!includeArchived) filter.archived = { $ne: true };
+        const tasks = await Task.find(filter);
         res.json(tasks);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -175,7 +217,10 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
 
 app.get('/api/tasks/:listId', authenticateToken, async (req, res) => {
     try {
-        const tasks = await Task.find({ userId: req.user.id, listId: req.params.listId });
+        const includeArchived = req.query.archived === 'true';
+        const filter = { userId: req.user.id, listId: req.params.listId };
+        if (!includeArchived) filter.archived = { $ne: true };
+        const tasks = await Task.find(filter);
         res.json(tasks);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -186,7 +231,8 @@ app.post('/api/tasks', authenticateToken, async (req, res) => {
     try {
         const {
             listId, title, note, important, priority,
-            dueDate, dueTime, tags, recurrence, attachments, status, blockedBy, location
+            dueDate, dueTime, tags, recurrence, recurrenceDayOfWeek,
+            attachments, status, blockedBy, location
         } = req.body;
 
         const task = await Task.create({
@@ -200,6 +246,7 @@ app.post('/api/tasks', authenticateToken, async (req, res) => {
             dueTime,
             tags: tags || [],
             recurrence: recurrence || 'none',
+            recurrenceDayOfWeek,
             attachments: attachments || [],
             status: status || 'todo',
             blockedBy: blockedBy || [],
@@ -256,10 +303,8 @@ app.use((req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
-}
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
 
 module.exports = app;

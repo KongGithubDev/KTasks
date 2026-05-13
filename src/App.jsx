@@ -16,7 +16,16 @@ import {
     List as ListIcon,
     Lock,
     Link,
-    Trash2
+    Trash2,
+    Eye,
+    EyeOff,
+    AlertTriangle,
+    LayoutGrid,
+    ChevronLeft,
+    BarChart3,
+    Archive,
+    Save,
+    X
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTasks } from './context/TaskContext'
@@ -56,6 +65,16 @@ function App() {
     const [activeTimerTaskId, setActiveTimerTaskId] = useState(null)
     const [timerSeconds, setTimerSeconds] = useState(0)
     const [isProfileOpen, setProfileOpen] = useState(false)
+    const [showCompleted, setShowCompleted] = useState(true)
+    const [bulkSelection, setBulkSelection] = useState([])
+    const [calendarOpen, setCalendarOpen] = useState(false)
+    const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth())
+    const [calendarYear, setCalendarYear] = useState(new Date().getFullYear())
+    const [calendarDayTasks, setCalendarDayTasks] = useState(null) // { date: Date, tasks: [] }
+    const [statsOpen, setStatsOpen] = useState(false)
+    const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false)
+    const [templateFormOpen, setTemplateFormOpen] = useState(false)
+    const [templateName, setTemplateName] = useState('')
 
     const {
         user,
@@ -68,6 +87,7 @@ function App() {
         toggleTask,
         toggleImportant,
         deleteTask,
+        archiveTask,
         activeTasks,
         addSubtask,
         toggleSubtask,
@@ -80,7 +100,11 @@ function App() {
         logout,
         loading,
         authLoading,
-        updateTaskState
+        updateTaskState,
+        showArchived,
+        setShowArchived,
+        addTemplate,
+        deleteTemplate
     } = useTasks()
 
     useEffect(() => {
@@ -118,6 +142,115 @@ function App() {
 
     const handleDragOver = (e) => {
         e.preventDefault();
+    };
+
+    const getDueStatus = (task) => {
+        if (!task.dueDate || task.completed) return null;
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const due = new Date(task.dueDate);
+        due.setHours(0, 0, 0, 0);
+        const diff = due.getTime() - now.getTime();
+        const days = diff / (1000 * 60 * 60 * 24);
+        if (days < 0) return 'overdue';
+        if (days === 0) return 'today';
+        if (days <= 3) return 'soon';
+        return null;
+    };
+
+    const toggleBulkSelect = (taskId) => {
+        setBulkSelection(prev =>
+            prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+        );
+    };
+
+    const handleBulkComplete = () => {
+        bulkSelection.forEach(id => toggleTask(id));
+        setBulkSelection([]);
+    };
+
+    const handleBulkDelete = () => {
+        bulkSelection.forEach(id => deleteTask(id));
+        setBulkSelection([]);
+    };
+
+    // Calendar helpers
+    const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+    const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+    const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    const getTasksForDate = (date) => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return activeTasks.filter(t => {
+            if (!t.dueDate) return false;
+            const td = new Date(t.dueDate);
+            td.setHours(0, 0, 0, 0);
+            return td.getTime() === d.getTime();
+        });
+    };
+
+    const prevMonth = () => {
+        if (calendarMonth === 0) {
+            setCalendarMonth(11);
+            setCalendarYear(calendarYear - 1);
+        } else {
+            setCalendarMonth(calendarMonth - 1);
+        }
+    };
+
+    const nextMonth = () => {
+        if (calendarMonth === 11) {
+            setCalendarMonth(0);
+            setCalendarYear(calendarYear + 1);
+        } else {
+            setCalendarMonth(calendarMonth + 1);
+        }
+    };
+
+    // Stats helpers
+    const getStats = () => {
+        const now = new Date();
+        const oneWeekAgo = new Date(now); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const allCompleted = tasks.filter(t => t.completed);
+        const weeklyCompleted = allCompleted.filter(t => {
+            const d = new Date(t.createdAt || t.updatedAt);
+            return d >= oneWeekAgo;
+        });
+        const totalFocus = tasks.reduce((sum, t) => sum + (t.timeSpent || 0), 0);
+        const completionRate = tasks.length > 0 ? Math.round((allCompleted.length / tasks.length) * 100) : 0;
+
+        // Streak calculation
+        const completedDates = [...new Set(allCompleted.map(t => {
+            const d = new Date(t.createdAt || t.updatedAt);
+            d.setHours(0, 0, 0, 0);
+            return d.getTime();
+        }))].sort((a, b) => b - a);
+        let streak = 0;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        let checkDate = today.getTime();
+        for (const date of completedDates) {
+            if (date === checkDate || (streak === 0 && date === checkDate - 86400000)) {
+                streak++;
+                checkDate -= 86400000;
+            } else if (date !== checkDate) {
+                break;
+            }
+        }
+        // Weekly bar chart data
+        const weekData = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(now); d.setDate(d.getDate() - (6 - i)); d.setHours(0, 0, 0, 0);
+            return {
+                label: d.toLocaleDateString('en-US', { weekday: 'short' }),
+                count: allCompleted.filter(t => {
+                    const td = new Date(t.createdAt || t.updatedAt);
+                    td.setHours(0, 0, 0, 0);
+                    return td.getTime() === d.getTime();
+                }).length
+            };
+        });
+
+        return { total: tasks.length, completed: allCompleted.length, weekly: weeklyCompleted.length, totalFocus, completionRate, streak, weekData };
     };
 
     // Global Keybindings
@@ -166,10 +299,12 @@ function App() {
     const activeList = lists.find(l => l._id === activeListId) || lists.find(l => l.id === activeListId)
     const selectedTask = activeTasks.find(t => t._id === selectedTaskId || t.id === selectedTaskId)
 
-    const filteredTasks = activeTasks.filter(t =>
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.note && t.note.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
+    const filteredTasks = activeTasks.filter(t => {
+        const matchSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (t.note && t.note.toLowerCase().includes(searchQuery.toLowerCase()));
+        const matchCompleted = showCompleted || !t.completed;
+        return matchSearch && matchCompleted;
+    })
 
     const sortedFilteredTasks = [...filteredTasks].sort((a, b) => {
         if (sortBy === 'priority') {
@@ -177,6 +312,16 @@ function App() {
             return (p[b.priority] || 0) - (p[a.priority] || 0);
         } else if (sortBy === 'alphabetical') {
             return a.title.localeCompare(b.title);
+        } else if (sortBy === 'due_date_asc') {
+            if (!a.dueDate && !b.dueDate) return 0;
+            if (!a.dueDate) return 1;
+            if (!b.dueDate) return -1;
+            return new Date(a.dueDate) - new Date(b.dueDate);
+        } else if (sortBy === 'due_date_desc') {
+            if (!a.dueDate && !b.dueDate) return 0;
+            if (!a.dueDate) return 1;
+            if (!b.dueDate) return -1;
+            return new Date(b.dueDate) - new Date(a.dueDate);
         } else {
             return new Date(b.createdAt) - new Date(a.createdAt);
         }
@@ -374,9 +519,23 @@ function App() {
                             onChange={(e) => setSortBy(e.target.value)}
                         >
                             <option value="date_desc">Newest First</option>
+                            <option value="due_date_asc">Due Date (Soonest)</option>
+                            <option value="due_date_desc">Due Date (Latest)</option>
                             <option value="priority">Priority</option>
                             <option value="alphabetical">A-Z</option>
                         </select>
+                        <button className="theme-toggle-btn glass" onClick={() => setShowCompleted(!showCompleted)} title={showCompleted ? 'Hide completed' : 'Show completed'}>
+                            {showCompleted ? <Eye size={20} /> : <EyeOff size={20} />}
+                        </button>
+                        <button className="theme-toggle-btn glass" onClick={() => setCalendarOpen(!calendarOpen)} title="Calendar">
+                            <LayoutGrid size={20} />
+                        </button>
+                        <button className="theme-toggle-btn glass" onClick={() => setStatsOpen(true)} title="Statistics">
+                            <BarChart3 size={20} />
+                        </button>
+                        <button className="theme-toggle-btn glass" onClick={() => setShowArchived(!showArchived)} title={showArchived ? 'Hide archived' : 'Show archived'}>
+                            <Archive size={20} color={showArchived ? 'var(--primary)' : 'inherit'} />
+                        </button>
                         <button className="theme-toggle-btn glass" onClick={() => setViewMode(viewMode === 'list' ? 'kanban' : 'list')} title="Toggle View">
                             {viewMode === 'list' ? <Columns size={20} /> : <ListIcon size={20} />}
                         </button>
@@ -406,6 +565,86 @@ function App() {
                 </header>
 
                 <section className="task-list-container">
+                    {bulkSelection.length > 0 && (
+                        <div className="bulk-bar glass" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderRadius: '12px', marginBottom: '12px', border: '1px solid var(--primary-light)' }}>
+                            <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{bulkSelection.length} selected</span>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button className="theme-toggle-btn" onClick={handleBulkComplete} style={{ padding: '6px 12px', borderRadius: '8px', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}>
+                                    Complete
+                                </button>
+                                <button className="theme-toggle-btn" onClick={handleBulkDelete} style={{ padding: '6px 12px', borderRadius: '8px', background: '#ff4d4f', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}>
+                                    Delete
+                                </button>
+                                <button className="theme-toggle-btn" onClick={() => setBulkSelection([])} style={{ padding: '6px 12px', borderRadius: '8px', background: 'var(--glass-bg)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', cursor: 'pointer', fontSize: '0.85rem' }}>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Calendar View */}
+                    {calendarOpen && (
+                        <div className="calendar-wrapper glass" style={{ padding: '16px', borderRadius: '16px', marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                <button className="icon-button" onClick={prevMonth}><ChevronLeft size={24} /></button>
+                                <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>{MONTH_NAMES[calendarMonth]} {calendarYear}</h3>
+                                <button className="icon-button" onClick={nextMonth}><ChevronRight size={24} /></button>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '8px' }}>
+                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                                    <div key={d} style={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', padding: '8px 0' }}>{d}</div>
+                                ))}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+                                {Array.from({ length: getFirstDayOfMonth(calendarYear, calendarMonth) }).map((_, i) => (
+                                    <div key={`empty-${i}`} />
+                                ))}
+                                {Array.from({ length: getDaysInMonth(calendarYear, calendarMonth) }).map((_, i) => {
+                                    const day = i + 1;
+                                    const date = new Date(calendarYear, calendarMonth, day);
+                                    const dayTasks = getTasksForDate(date);
+                                    const isToday = new Date().toDateString() === date.toDateString();
+                                    return (
+                                        <button
+                                            key={day}
+                                            onClick={() => dayTasks.length > 0 && setCalendarDayTasks({ date, tasks: dayTasks })}
+                                            style={{
+                                                aspectRatio: '1',
+                                                borderRadius: '8px',
+                                                border: isToday ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                                                background: isToday ? 'var(--primary-light)' : 'var(--glass-bg)',
+                                                color: 'var(--text-primary)',
+                                                cursor: dayTasks.length > 0 ? 'pointer' : 'default',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '4px',
+                                                padding: '4px',
+                                                position: 'relative'
+                                            }}
+                                        >
+                                            <span style={{ fontSize: '0.9rem', fontWeight: isToday ? 'bold' : 'normal' }}>{day}</span>
+                                            {dayTasks.length > 0 && (
+                                                <div style={{ display: 'flex', gap: '2px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                                    {dayTasks.slice(0, 3).map((t, idx) => (
+                                                        <div key={idx} style={{
+                                                            width: '6px',
+                                                            height: '6px',
+                                                            borderRadius: '50%',
+                                                            background: t.completed ? '#52c41a' : t.priority === 'high' ? '#ff4d4f' : t.priority === 'medium' ? '#ff8c00' : 'var(--primary)'
+                                                        }} />
+                                                    ))}
+                                                    {dayTasks.length > 3 && <span style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>+{dayTasks.length - 3}</span>}
+                                                </div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {!['important', 'planned', 'today'].includes(activeListId) && (
                         <div className="create-task-wrapper">
                             <div className="add-task-box">
@@ -419,6 +658,52 @@ function App() {
                                     onKeyDown={handleAddTask}
                                 />
                             </div>
+                            {user?.templates && user.templates.length > 0 && (
+                                <div style={{ position: 'relative', marginTop: '8px' }}>
+                                    <button
+                                        className="theme-toggle-btn glass"
+                                        onClick={() => setTemplateDropdownOpen(!templateDropdownOpen)}
+                                        style={{ fontSize: '0.85rem', padding: '6px 12px' }}
+                                    >
+                                        <Save size={14} /> Use Template
+                                    </button>
+                                    {templateDropdownOpen && (
+                                        <div className="glass" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 50, marginTop: '4px', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden', minWidth: '200px' }}>
+                                            {user.templates.map((tmpl, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => {
+                                                        addTask(tmpl.title, tmpl);
+                                                        setTemplateDropdownOpen(false);
+                                                    }}
+                                                    style={{
+                                                        width: '100%',
+                                                        textAlign: 'left',
+                                                        padding: '10px 14px',
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        borderBottom: '1px solid var(--border-color)',
+                                                        color: 'var(--text-primary)',
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.9rem',
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center'
+                                                    }}
+                                                >
+                                                    <span>{tmpl.name}</span>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); deleteTemplate(idx); }}
+                                                        style={{ background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer', padding: '2px' }}
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -457,7 +742,7 @@ function App() {
                                                         onDragStart={(e) => handleDragStart(e, task._id || task.id)}
                                                         onClick={() => setSelectedTaskId(task._id || task.id)}
                                                         className={`task-item kanban-card ${selectedTaskId === (task._id || task.id) ? 'selected' : ''}`}
-                                                        style={{ padding: '16px', borderRadius: '12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', cursor: 'grab', display: 'block', opacity: isBlocked ? 0.6 : 1 }}
+                                                        style={{ padding: '16px', borderRadius: '12px', background: 'var(--bg-color)', border: getDueStatus(task) === 'overdue' ? '1px solid #ff4d4f' : getDueStatus(task) === 'today' ? '1px solid #ff8c00' : getDueStatus(task) === 'soon' ? '1px solid #ffd700' : '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', cursor: 'grab', display: 'block', opacity: isBlocked ? 0.6 : 1 }}
                                                     >
                                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                                                             <span className="task-title" style={{ fontWeight: '600', fontSize: '1rem', textDecoration: task.completed ? 'line-through' : 'none', color: task.completed ? 'var(--text-secondary)' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -474,7 +759,7 @@ function App() {
                                                                 <span className={`priority-badge ${task.priority}`} style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{task.priority}</span>
                                                             )}
                                                             {task.dueDate && (
-                                                                <span className="task-date" style={{ fontSize: '0.75rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>
+                                                                <span className="task-date" style={{ fontSize: '0.75rem', color: getDueStatus(task) === 'overdue' ? '#ff4d4f' : getDueStatus(task) === 'today' ? '#ff8c00' : getDueStatus(task) === 'soon' ? '#d4a017' : 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', background: getDueStatus(task) === 'overdue' ? 'rgba(255, 77, 79, 0.1)' : getDueStatus(task) === 'today' ? 'rgba(255, 140, 0, 0.1)' : getDueStatus(task) === 'soon' ? 'rgba(255, 215, 0, 0.15)' : 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>
                                                                     <Calendar size={10} />
                                                                     {new Date(task.dueDate).toLocaleDateString()}
                                                                 </span>
@@ -518,8 +803,15 @@ function App() {
                                                 key={task._id || task.id}
                                                 onClick={() => setSelectedTaskId(task._id || task.id)}
                                                 className={`task-item ${task.completed ? 'completed' : ''} ${selectedTaskId === (task._id || task.id) ? 'selected' : ''}`}
-                                                style={{ opacity: isBlocked ? 0.6 : 1 }}
+                                                style={{ opacity: isBlocked ? 0.6 : 1, borderLeft: getDueStatus(task) === 'overdue' ? '3px solid #ff4d4f' : getDueStatus(task) === 'today' ? '3px solid #ff8c00' : getDueStatus(task) === 'soon' ? '3px solid #ffd700' : undefined }}
                                             >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={bulkSelection.includes(task._id || task.id)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onChange={() => toggleBulkSelect(task._id || task.id)}
+                                                    style={{ marginRight: '8px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                                                />
                                                 <button
                                                     className="check-btn"
                                                     onClick={(e) => {
@@ -548,11 +840,16 @@ function App() {
                                                                 {task.priority}
                                                             </span>
                                                         )}
+                                                        {getDueStatus(task) === 'overdue' && (
+                                                            <span style={{ fontSize: '0.7rem', background: '#ff4d4f', color: 'white', padding: '2px 6px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                                <AlertTriangle size={10} /> Overdue
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="task-meta">
                                                         {task.note && <span className="task-note">{task.note.substring(0, 60)}{task.note.length > 60 ? '...' : ''}</span>}
                                                         {task.dueDate && (
-                                                            <span className="task-date" style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>
+                                                            <span className="task-date" style={{ fontSize: '0.8rem', color: getDueStatus(task) === 'overdue' ? '#ff4d4f' : getDueStatus(task) === 'today' ? '#ff8c00' : getDueStatus(task) === 'soon' ? '#d4a017' : 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', background: getDueStatus(task) === 'overdue' ? 'rgba(255, 77, 79, 0.1)' : getDueStatus(task) === 'today' ? 'rgba(255, 140, 0, 0.1)' : getDueStatus(task) === 'soon' ? 'rgba(255, 215, 0, 0.15)' : 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>
                                                                 <Calendar size={12} />
                                                                 {new Date(task.dueDate).toLocaleDateString()} {task.dueTime || ''}
                                                             </span>
@@ -581,6 +878,11 @@ function App() {
                                                     <button className="icon-button star-btn" onClick={(e) => { e.stopPropagation(); toggleImportant(task._id || task.id); }}>
                                                         <Star size={20} fill={task.important ? "var(--primary)" : "none"} color={task.important ? "var(--primary)" : "var(--text-secondary)"} />
                                                     </button>
+                                                    {!task.archived && (
+                                                        <button className="icon-button" onClick={(e) => { e.stopPropagation(); archiveTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }} title="Archive">
+                                                            <Archive size={18} color="var(--text-secondary)" />
+                                                        </button>
+                                                    )}
                                                     <button className="icon-button delete-btn" onClick={(e) => { e.stopPropagation(); deleteTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }}>
                                                         <Trash2 size={20} />
                                                     </button>
@@ -662,6 +964,32 @@ function App() {
                                 <option value="monthly">Monthly</option>
                                 <option value="yearly">Yearly</option>
                             </select>
+                            {selectedTask.recurrence === 'weekly' && (
+                                <div style={{ marginTop: '10px' }}>
+                                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Repeat on</label>
+                                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
+                                            <button
+                                                key={day}
+                                                onClick={() => updateTaskState(selectedTask._id || selectedTask.id, { recurrenceDayOfWeek: idx })}
+                                                style={{
+                                                    padding: '6px 10px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid var(--border-color)',
+                                                    background: selectedTask.recurrenceDayOfWeek === idx ? 'var(--primary)' : 'var(--glass-bg)',
+                                                    color: selectedTask.recurrenceDayOfWeek === idx ? 'white' : 'var(--text-primary)',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: selectedTask.recurrenceDayOfWeek === idx ? 'bold' : 'normal',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                {day}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="detail-section">
@@ -760,6 +1088,45 @@ function App() {
                                     </>
                                 )}
                             </div>
+                        </div>
+
+                        <div className="detail-section">
+                            {!templateFormOpen ? (
+                                <button
+                                    onClick={() => setTemplateFormOpen(true)}
+                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px dashed var(--primary)', background: 'var(--primary-light)', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '500' }}
+                                >
+                                    <Save size={16} /> Save as Template
+                                </button>
+                            ) : (
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <input
+                                        autoFocus
+                                        placeholder="Template name..."
+                                        value={templateName}
+                                        onChange={(e) => setTemplateName(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && templateName.trim()) {
+                                                addTemplate({
+                                                    name: templateName.trim(),
+                                                    title: selectedTask.title,
+                                                    note: selectedTask.note,
+                                                    priority: selectedTask.priority,
+                                                    dueTime: selectedTask.dueTime,
+                                                    recurrence: selectedTask.recurrence,
+                                                    recurrenceDayOfWeek: selectedTask.recurrenceDayOfWeek,
+                                                    tags: selectedTask.tags,
+                                                    important: selectedTask.important
+                                                });
+                                                setTemplateName('');
+                                                setTemplateFormOpen(false);
+                                            }
+                                        }}
+                                        style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
+                                    />
+                                    <button onClick={() => { setTemplateFormOpen(false); setTemplateName(''); }} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', cursor: 'pointer', color: 'var(--text-secondary)' }}><X size={16} /></button>
+                                </div>
+                            )}
                         </div>
 
                         <div className="detail-section">
@@ -874,6 +1241,135 @@ function App() {
                             <button onClick={logout} style={{ width: '100%', padding: '14px', borderRadius: '16px', background: 'var(--glass-bg)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', fontWeight: '600', transition: 'all 0.2s' }} className="logout-btn-full">
                                 <LogOut size={18} /> Logout of KTasks
                             </button>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Calendar Day Tasks Modal */}
+            <AnimatePresence>
+                {calendarDayTasks && (
+                    <div className="mobile-backdrop" style={{ zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setCalendarDayTasks(null)}>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="glass"
+                            style={{ padding: '24px', borderRadius: '24px', maxWidth: '450px', width: '90%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', maxHeight: '80vh', overflowY: 'auto' }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>{calendarDayTasks.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
+                                <button className="icon-button" onClick={() => setCalendarDayTasks(null)}><ChevronRight size={20} className="rotate-90" /></button>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {calendarDayTasks.tasks.map(task => (
+                                    <div
+                                        key={task._id || task.id}
+                                        onClick={() => { setSelectedTaskId(task._id || task.id); setCalendarDayTasks(null); }}
+                                        style={{
+                                            padding: '12px 16px',
+                                            borderRadius: '12px',
+                                            background: 'var(--glass-bg)',
+                                            border: '1px solid var(--border-color)',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            opacity: task.completed ? 0.6 : 1
+                                        }}
+                                    >
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); toggleTask(task._id || task.id); }}
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                        >
+                                            {task.completed ? <CheckCircle2 size={22} color="var(--primary)" /> : <Circle size={22} color="var(--border-color)" />}
+                                        </button>
+                                        <div style={{ flex: 1 }}>
+                                            <span style={{ textDecoration: task.completed ? 'line-through' : 'none', color: 'var(--text-primary)', fontWeight: '500' }}>{task.title}</span>
+                                            {task.dueTime && <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginLeft: '8px' }}>{task.dueTime}</span>}
+                                        </div>
+                                        {task.priority !== 'low' && (
+                                            <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '10px', background: task.priority === 'high' ? 'rgba(255,77,79,0.15)' : 'rgba(255,140,0,0.15)', color: task.priority === 'high' ? '#ff4d4f' : '#ff8c00' }}>{task.priority}</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Statistics Dashboard Modal */}
+            <AnimatePresence>
+                {statsOpen && (
+                    <div className="mobile-backdrop" style={{ zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setStatsOpen(false)}>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="glass"
+                            style={{ padding: '32px', borderRadius: '24px', maxWidth: '480px', width: '90%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', maxHeight: '85vh', overflowY: 'auto' }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {(() => {
+                                const stats = getStats();
+                                const maxCount = Math.max(...stats.weekData.map(d => d.count), 1);
+                                return (
+                                    <>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                            <h2 style={{ margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <BarChart3 size={28} color="var(--primary)" /> Statistics
+                                            </h2>
+                                            <button className="icon-button" onClick={() => setStatsOpen(false)}><X size={24} /></button>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '24px' }}>
+                                            <div className="glass" style={{ padding: '16px', borderRadius: '16px', textAlign: 'center' }}>
+                                                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{stats.completed}</div>
+                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Completed</div>
+                                            </div>
+                                            <div className="glass" style={{ padding: '16px', borderRadius: '16px', textAlign: 'center' }}>
+                                                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{stats.total}</div>
+                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Tasks</div>
+                                            </div>
+                                            <div className="glass" style={{ padding: '16px', borderRadius: '16px', textAlign: 'center' }}>
+                                                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ff8c00' }}>{stats.completionRate}%</div>
+                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Completion Rate</div>
+                                            </div>
+                                            <div className="glass" style={{ padding: '16px', borderRadius: '16px', textAlign: 'center' }}>
+                                                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ff4d4f' }}>{stats.streak}</div>
+                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Day Streak</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="glass" style={{ padding: '16px', borderRadius: '16px', marginBottom: '20px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                                <Clock size={18} color="var(--primary)" />
+                                                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Total Focus Time</span>
+                                            </div>
+                                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                                                {Math.floor(stats.totalFocus / 3600)}h {Math.floor((stats.totalFocus % 3600) / 60)}m
+                                            </div>
+                                        </div>
+
+                                        <div className="glass" style={{ padding: '16px', borderRadius: '16px' }}>
+                                            <h4 style={{ margin: '0 0 16px 0', color: 'var(--text-primary)' }}>Last 7 Days</h4>
+                                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '120px' }}>
+                                                {stats.weekData.map((d, i) => (
+                                                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                                                        <div style={{ width: '100%', background: 'var(--border-color)', borderRadius: '6px', height: '100%', position: 'relative', overflow: 'hidden' }}>
+                                                            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${(d.count / maxCount) * 100}%`, background: 'linear-gradient(180deg, var(--primary), #6b8eff)', borderRadius: '6px', transition: 'height 0.5s ease-out', minHeight: d.count > 0 ? '4px' : 0 }} />
+                                                        </div>
+                                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{d.label}</span>
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{d.count}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
                         </motion.div>
                     </div>
                 )}

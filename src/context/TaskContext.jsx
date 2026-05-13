@@ -1,10 +1,41 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const TaskContext = createContext();
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const getNextDueDate = (currentDueDate, recurrence, dayOfWeek) => {
+    if (!currentDueDate || !recurrence || recurrence === 'none') return null;
+    const date = new Date(currentDueDate);
+    switch (recurrence) {
+        case 'daily':
+            date.setDate(date.getDate() + 1);
+            break;
+        case 'weekly':
+            if (dayOfWeek !== undefined && dayOfWeek !== null) {
+                date.setDate(date.getDate() + 1);
+                while (date.getDay() !== dayOfWeek) {
+                    date.setDate(date.getDate() + 1);
+                }
+            } else {
+                date.setDate(date.getDate() + 7);
+            }
+            break;
+        case 'monthly':
+            date.setMonth(date.getMonth() + 1);
+            break;
+        case 'yearly':
+            date.setFullYear(date.getFullYear() + 1);
+            break;
+        default:
+            return null;
+    }
+    return date.toISOString();
+};
 
 export const TaskProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -14,6 +45,7 @@ export const TaskProvider = ({ children }) => {
     const [activeListId, setActiveListId] = useState('important');
     const [loading, setLoading] = useState(false);
     const [authLoading, setAuthLoading] = useState(!!localStorage.getItem('token'));
+    const [showArchived, setShowArchived] = useState(false);
 
     // Setup Axios defaults and fetch user on refresh
     useEffect(() => {
@@ -49,7 +81,22 @@ export const TaskProvider = ({ children }) => {
         }
     }, [token]);
 
-    const fetchInitialData = async () => {
+    const fetchTasks = useCallback(async (listId) => {
+        try {
+            const archivedParam = showArchived ? '?archived=true' : '';
+            if (listId === 'important' || listId === 'planned' || listId === 'today') {
+                const res = await axios.get(`${API_URL}/tasks${archivedParam}`);
+                setTasks(res.data);
+            } else {
+                const res = await axios.get(`${API_URL}/tasks/${listId}${archivedParam}`);
+                setTasks(res.data);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }, [showArchived]);
+
+    const fetchInitialData = useCallback(async () => {
         setLoading(true);
         try {
             const resLists = await axios.get(`${API_URL}/lists`);
@@ -65,7 +112,7 @@ export const TaskProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [fetchTasks]);
 
     // Listen for Gamification Updates
     useEffect(() => {
@@ -76,25 +123,11 @@ export const TaskProvider = ({ children }) => {
         return () => window.removeEventListener('user-updated', handleUserUpdate);
     }, []);
 
-    const fetchTasks = async (listId) => {
-        try {
-            if (listId === 'important' || listId === 'planned' || listId === 'today') {
-                const res = await axios.get(`${API_URL}/tasks`);
-                setTasks(res.data);
-            } else {
-                const res = await axios.get(`${API_URL}/tasks/${listId}`);
-                setTasks(res.data);
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
     useEffect(() => {
         if (activeListId) {
             fetchTasks(activeListId);
         }
-    }, [activeListId]);
+    }, [activeListId, fetchTasks, showArchived]);
 
     const loginWithGoogle = async (credential) => {
         try {
@@ -152,14 +185,13 @@ export const TaskProvider = ({ children }) => {
         }
     };
 
-    const addTask = async (title) => {
-        if (!activeListId || activeListId === 'important' || activeListId === 'planned') return;
+    const addTask = async (title, templateData = null) => {
+        if (!activeListId || activeListId === 'important' || activeListId === 'planned' || activeListId === 'today') return;
         try {
-            const res = await axios.post(`${API_URL}/tasks`, {
-                listId: activeListId,
-                title,
-                priority: 'low'
-            });
+            const payload = templateData
+                ? { listId: activeListId, title: title || templateData.title || 'New Task', ...templateData }
+                : { listId: activeListId, title, priority: 'low' };
+            const res = await axios.post(`${API_URL}/tasks`, payload);
             setTasks([...tasks, res.data]);
             toast.success('Task added');
         } catch (err) {
@@ -170,6 +202,7 @@ export const TaskProvider = ({ children }) => {
 
     const toggleTask = async (taskId) => {
         const task = tasks.find(t => t._id === taskId);
+        if (!task) return;
         try {
             const isCompleting = !task.completed;
             const res = await axios.patch(`${API_URL}/tasks/${taskId}`, { completed: isCompleting });
@@ -193,9 +226,34 @@ export const TaskProvider = ({ children }) => {
                 const userRes = await axios.patch(`${API_URL}/auth/me`, { xp: newXp, level: newLevel }, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                // Note: user state needs to be updated. Since we are in Context, we should have a setUser!
-                // We'll dispatch a custom event or we need to add `setUser` to context state.
                 window.dispatchEvent(new CustomEvent('user-updated', { detail: userRes.data }));
+            }
+
+            // Auto-create next recurring instance
+            if (isCompleting && task.recurrence && task.recurrence !== 'none' && task.dueDate) {
+                const nextDueDate = getNextDueDate(task.dueDate, task.recurrence, task.recurrenceDayOfWeek);
+                if (nextDueDate) {
+                    try {
+                        const nextTask = await axios.post(`${API_URL}/tasks`, {
+                            listId: task.listId,
+                            title: task.title,
+                            note: task.note || '',
+                            important: task.important,
+                            priority: task.priority,
+                            dueDate: nextDueDate,
+                            dueTime: task.dueTime || '',
+                            tags: task.tags || [],
+                            recurrence: task.recurrence,
+                            recurrenceDayOfWeek: task.recurrenceDayOfWeek,
+                            status: 'todo',
+                            blockedBy: []
+                        });
+                        setTasks(prev => [...prev, nextTask.data]);
+                        toast.success(`Next ${task.recurrence} task created: ${new Date(nextDueDate).toLocaleDateString()}`);
+                    } catch (err) {
+                        console.error('Failed to create recurring task:', err);
+                    }
+                }
             }
         } catch (err) {
             console.error(err);
@@ -204,6 +262,7 @@ export const TaskProvider = ({ children }) => {
 
     const toggleImportant = async (taskId) => {
         const task = tasks.find(t => t._id === taskId);
+        if (!task) return;
         try {
             const res = await axios.patch(`${API_URL}/tasks/${taskId}`, { important: !task.important });
             setTasks(tasks.map(t => t._id === taskId ? res.data : t));
@@ -220,6 +279,45 @@ export const TaskProvider = ({ children }) => {
         } catch (err) {
             console.error(err);
             toast.error('Failed to delete task');
+        }
+    };
+
+    const archiveTask = async (taskId) => {
+        try {
+            const res = await axios.patch(`${API_URL}/tasks/${taskId}`, { archived: true });
+            setTasks(tasks.map(t => t._id === taskId ? res.data : t));
+            toast.success('Task archived');
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to archive task');
+        }
+    };
+
+    const addTemplate = async (template) => {
+        try {
+            const res = await axios.post(`${API_URL}/templates`, template);
+            const updatedUser = { ...user, templates: [...(user.templates || []), res.data] };
+            setUser(updatedUser);
+            await axios.patch(`${API_URL}/auth/me`, { templates: updatedUser.templates });
+            toast.success('Template saved');
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to save template');
+        }
+    };
+
+    const deleteTemplate = async (idx) => {
+        try {
+            await axios.delete(`${API_URL}/templates/${idx}`);
+            const newTemplates = [...(user.templates || [])];
+            newTemplates.splice(idx, 1);
+            const updatedUser = { ...user, templates: newTemplates };
+            setUser(updatedUser);
+            await axios.patch(`${API_URL}/auth/me`, { templates: newTemplates });
+            toast.success('Template deleted');
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to delete template');
         }
     };
 
@@ -252,6 +350,7 @@ export const TaskProvider = ({ children }) => {
 
     const addSubtask = async (taskId, title) => {
         const task = tasks.find(t => t._id === taskId);
+        if (!task) return;
         const newSubtasks = [...(task.subtasks || []), { title, completed: false }];
         try {
             const res = await axios.patch(`${API_URL}/tasks/${taskId}`, { subtasks: newSubtasks });
@@ -263,6 +362,7 @@ export const TaskProvider = ({ children }) => {
 
     const toggleSubtask = async (taskId, subtaskId) => {
         const task = tasks.find(t => t._id === taskId);
+        if (!task || !task.subtasks) return;
         const newSubtasks = task.subtasks.map(sh =>
             sh._id === subtaskId ? { ...sh, completed: !sh.completed } : sh
         );
@@ -291,9 +391,10 @@ export const TaskProvider = ({ children }) => {
     return (
         <TaskContext.Provider value={{
             user, token, lists, activeListId, setActiveListId,
-            tasks, addTask, toggleTask, toggleImportant, deleteTask,
+            tasks, addTask, toggleTask, toggleImportant, deleteTask, archiveTask,
             activeTasks, addSubtask, toggleSubtask, setPriority,
-            updateNote, updateTaskState, addList, updateList, deleteList, loginWithGoogle, logout, loading, authLoading
+            updateNote, updateTaskState, addList, updateList, deleteList, loginWithGoogle, logout, loading, authLoading,
+            showArchived, setShowArchived, addTemplate, deleteTemplate
         }}>
             {children}
         </TaskContext.Provider>
