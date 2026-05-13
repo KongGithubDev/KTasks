@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Button, Paper, Stack, Typography, CircularProgress } from '@mui/material'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
 import CheckCircle from '@mui/icons-material/CheckCircle'
 import { useTasks } from './context/TaskContext'
 import { GoogleLogin } from '@react-oauth/google'
@@ -255,6 +257,78 @@ function App() {
         localStorage.setItem('theme', theme)
     }, [theme])
 
+    const muiTheme = useMemo(() => createTheme({
+        palette: {
+            mode: theme,
+            primary: { main: '#6366f1', light: '#818cf8', dark: '#4f46e5' },
+            secondary: { main: '#ec4899' },
+            background: {
+                default: theme === 'dark' ? '#0f172a' : '#f8fafc',
+                paper: theme === 'dark' ? 'rgba(30,41,59,0.7)' : 'rgba(255,255,255,0.7)',
+            },
+            text: {
+                primary: theme === 'dark' ? '#f1f5f9' : '#1e293b',
+                secondary: theme === 'dark' ? '#94a3b8' : '#64748b',
+            },
+        },
+        shape: { borderRadius: 16 },
+        components: {
+            MuiPaper: {
+                styleOverrides: {
+                    root: {
+                        backgroundImage: 'none',
+                        backdropFilter: 'blur(12px)',
+                        border: theme === 'dark'
+                            ? '1px solid rgba(255,255,255,0.08)'
+                            : '1px solid rgba(255,255,255,0.5)',
+                        boxShadow: theme === 'dark'
+                            ? '0 8px 32px rgba(0,0,0,0.3)'
+                            : '0 8px 32px rgba(31,38,135,0.1)',
+                    },
+                },
+            },
+            MuiButton: {
+                styleOverrides: {
+                    root: { textTransform: 'none', borderRadius: 12, fontWeight: 600 },
+                },
+            },
+            MuiIconButton: {
+                styleOverrides: {
+                    root: { borderRadius: 12 },
+                },
+            },
+            MuiTextField: {
+                styleOverrides: {
+                    root: {
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: 12,
+                            backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.5)',
+                        },
+                    },
+                },
+            },
+            MuiDialog: {
+                styleOverrides: {
+                    paper: {
+                        borderRadius: 24,
+                        backdropFilter: 'blur(20px)',
+                        border: theme === 'dark'
+                            ? '1px solid rgba(255,255,255,0.1)'
+                            : '1px solid rgba(255,255,255,0.6)',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                    },
+                },
+            },
+            MuiCssBaseline: {
+                styleOverrides: {
+                    body: {
+                        backgroundColor: theme === 'dark' ? '#0f172a' : '#f8fafc',
+                    },
+                },
+            },
+        },
+    }), [theme])
+
     const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light')
 
     const handleAddTask = (e) => {
@@ -350,6 +424,8 @@ function App() {
     }
 
     return (
+        <ThemeProvider theme={muiTheme}>
+            <CssBaseline />
         <div className="app-layout">
             <Toaster position="top-right" />
             {/* Mobile Backdrop */}
@@ -529,6 +605,7 @@ function App() {
                 stats={getStats()}
             />
         </div>
+        </ThemeProvider>
     );
 }
 
