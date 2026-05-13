@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import {
+    Button, IconButton, TextField, Dialog, DialogTitle, DialogContent, Paper,
+    Select, MenuItem, Checkbox, Chip, Badge, Box, Stack, Typography,
+    FormControl, InputLabel, Divider, Tooltip, InputAdornment
+} from '@mui/material'
 import CheckCircle from '@mui/icons-material/CheckCircle'
 import Star from '@mui/icons-material/Star'
 import StarBorder from '@mui/icons-material/StarBorder'
@@ -501,94 +506,88 @@ function App() {
                         </h1>
                     </div>
 
-                    <div className="header-right">
-                        <div className="search-bar-wrapper glass">
-                            <Search sx={{fontSize:'18px'}} className="search-icon" />
-                            <input
-                                type="text"
-                                placeholder="Search..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
-                        <select
-                            className="theme-toggle-btn glass"
-                            style={{ padding: '8px 12px', border: 'none', borderRadius: '20px', appearance: 'none', cursor: 'pointer', outline: 'none' }}
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                        >
-                            <option value="date_desc">Newest First</option>
-                            <option value="due_date_asc">Due Date (Soonest)</option>
-                            <option value="due_date_desc">Due Date (Latest)</option>
-                            <option value="priority">Priority</option>
-                            <option value="alphabetical">A-Z</option>
-                        </select>
-                        <button className="theme-toggle-btn glass" onClick={() => setShowCompleted(!showCompleted)} title={showCompleted ? 'Hide completed' : 'Show completed'}>
-                            {showCompleted ? <Visibility sx={{fontSize:'20px'}} /> : <VisibilityOff sx={{fontSize:'20px'}} />}
-                        </button>
-                        <button className="theme-toggle-btn glass" onClick={() => setCalendarOpen(!calendarOpen)} title="Calendar">
-                            <GridView sx={{fontSize:'20px'}} />
-                        </button>
-                        <button className="theme-toggle-btn glass" onClick={() => setStatsOpen(true)} title="Statistics">
-                            <BarChart sx={{fontSize:'20px'}} />
-                        </button>
-                        <button className="theme-toggle-btn glass" onClick={() => setShowArchived(!showArchived)} title={showArchived ? 'Hide archived' : 'Show archived'}>
-                            <Archive sx={{fontSize:'20px',color:showArchived ? 'var(--primary)' : 'inherit'}} />
-                        </button>
-                        <button className="theme-toggle-btn glass" onClick={() => setViewMode(viewMode === 'list' ? 'kanban' : 'list')} title="Toggle View">
-                            {viewMode === 'list' ? <ViewColumn sx={{fontSize:'20px'}} /> : <FormatListBulleted sx={{fontSize:'20px'}} />}
-                        </button>
-                        <button className="theme-toggle-btn glass" onClick={toggleTheme}>
-                            {theme === 'light' ? (
-                                <>
-                                    <AccessTime sx={{fontSize:'20px'}} />
-                                    <span>Dark mode</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Star sx={{fontSize:'20px'}} />
-                                    <span>Light mode</span>
-                                </>
-                            )}
-                        </button>
-                        <div className="auth-profile" style={{ cursor: 'pointer' }} onClick={() => setProfileOpen(true)}>
-                            <div className="user-info">
-                                <span>{user?.name || 'User'}</span>
-                                <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 'bold' }}>Level {user?.level || 1}</span>
-                            </div>
-                            <div className="user-avatar" style={{ border: '2px solid var(--primary)', padding: '2px', borderRadius: '50%' }}>
-                                {user?.picture ? <img src={user.picture} alt="Avatar" style={{ borderRadius: '50%' }} /> : <Person sx={{fontSize:'20px'}} />}
-                            </div>
-                        </div>
-                    </div>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <TextField
+                            size="small"
+                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start"><Search sx={{fontSize:18}} /></InputAdornment>
+                                ),
+                            }}
+                            sx={{ width: 180 }}
+                        />
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)} displayEmpty>
+                                <MenuItem value="date_desc">Newest First</MenuItem>
+                                <MenuItem value="due_date_asc">Due Date (Soonest)</MenuItem>
+                                <MenuItem value="due_date_desc">Due Date (Latest)</MenuItem>
+                                <MenuItem value="priority">Priority</MenuItem>
+                                <MenuItem value="alphabetical">A-Z</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <Tooltip title={showCompleted ? 'Hide completed' : 'Show completed'}>
+                            <IconButton onClick={() => setShowCompleted(!showCompleted)}>
+                                {showCompleted ? <Visibility sx={{fontSize:20}} /> : <VisibilityOff sx={{fontSize:20}} />}
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Calendar">
+                            <IconButton onClick={() => setCalendarOpen(!calendarOpen)}>
+                                <GridView sx={{fontSize:20}} />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Statistics">
+                            <IconButton onClick={() => setStatsOpen(true)}>
+                                <BarChart sx={{fontSize:20}} />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title={showArchived ? 'Hide archived' : 'Show archived'}>
+                            <IconButton onClick={() => setShowArchived(!showArchived)}>
+                                <Archive sx={{fontSize:20,color:showArchived ? 'primary.main' : 'inherit'}} />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Toggle View">
+                            <IconButton onClick={() => setViewMode(viewMode === 'list' ? 'kanban' : 'list')}>
+                                {viewMode === 'list' ? <ViewColumn sx={{fontSize:20}} /> : <FormatListBulleted sx={{fontSize:20}} />}
+                            </IconButton>
+                        </Tooltip>
+                        <Button variant="outlined" size="small" onClick={toggleTheme} startIcon={theme === 'light' ? <AccessTime /> : <Star />}>
+                            {theme === 'light' ? 'Dark' : 'Light'}
+                        </Button>
+                        <Stack direction="row" alignItems="center" spacing={1} sx={{ cursor: 'pointer' }} onClick={() => setProfileOpen(true)}>
+                            <Box textAlign="right">
+                                <Typography variant="body2">{user?.name || 'User'}</Typography>
+                                <Typography variant="caption" color="primary" fontWeight="bold">Level {user?.level || 1}</Typography>
+                            </Box>
+                            <Badge overlap="circular">
+                                {user?.picture ? <img src={user.picture} alt="Avatar" style={{ width:36, height:36, borderRadius:'50%' }} /> : <Person sx={{fontSize:36}} />}
+                            </Badge>
+                        </Stack>
+                    </Stack>
                 </header>
 
                 <section className="task-list-container">
                     {bulkSelection.length > 0 && (
-                        <div className="bulk-bar glass" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderRadius: '12px', marginBottom: '12px', border: '1px solid var(--primary-light)' }}>
-                            <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{bulkSelection.length} selected</span>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <button className="theme-toggle-btn" onClick={handleBulkComplete} style={{ padding: '6px 12px', borderRadius: '8px', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}>
-                                    Complete
-                                </button>
-                                <button className="theme-toggle-btn" onClick={handleBulkDelete} style={{ padding: '6px 12px', borderRadius: '8px', background: '#ff4d4f', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}>
-                                    Delete
-                                </button>
-                                <button className="theme-toggle-btn" onClick={() => setBulkSelection([])} style={{ padding: '6px 12px', borderRadius: '8px', background: 'var(--glass-bg)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', cursor: 'pointer', fontSize: '0.85rem' }}>
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
+                        <Paper sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1.5, mb: 1.5, border: '1px solid', borderColor: 'primary.light' }}>
+                            <Typography variant="body2" fontWeight={600}>{bulkSelection.length} selected</Typography>
+                            <Stack direction="row" spacing={1}>
+                                <Button size="small" variant="contained" onClick={handleBulkComplete}>Complete</Button>
+                                <Button size="small" variant="contained" color="error" onClick={handleBulkDelete}>Delete</Button>
+                                <Button size="small" variant="outlined" onClick={() => setBulkSelection([])}>Cancel</Button>
+                            </Stack>
+                        </Paper>
                     )}
 
                     {/* Calendar View */}
                     {calendarOpen && (
                         <div className="calendar-wrapper glass" style={{ padding: '16px', borderRadius: '16px', marginBottom: '16px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                <button className="icon-button" onClick={prevMonth}><ChevronLeft sx={{fontSize:'24px'}} /></button>
-                                <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>{MONTH_NAMES[calendarMonth]} {calendarYear}</h3>
-                                <button className="icon-button" onClick={nextMonth}><ChevronRight sx={{fontSize:'24px'}} /></button>
-                            </div>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <IconButton onClick={prevMonth}><ChevronLeft /></IconButton>
+                                <Typography variant="h6">{MONTH_NAMES[calendarMonth]} {calendarYear}</Typography>
+                                <IconButton onClick={nextMonth}><ChevronRight /></IconButton>
+                            </Box>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '8px' }}>
                                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
                                     <div key={d} style={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', padding: '8px 0' }}>{d}</div>
@@ -873,19 +872,25 @@ function App() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="task-actions">
-                                                    <button className="icon-button star-btn" onClick={(e) => { e.stopPropagation(); toggleImportant(task._id || task.id); }}>
-                                                        {task.important ? <Star sx={{fontSize:'20px',color:'var(--primary)'}} /> : <StarBorder sx={{fontSize:'20px',color:'var(--text-secondary)'}} />}
-                                                    </button>
+                                                <Stack direction="row" spacing={0.5}>
+                                                    <Tooltip title="Important">
+                                                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleImportant(task._id || task.id); }}>
+                                                            {task.important ? <Star sx={{fontSize:20,color:'primary.main'}} /> : <StarBorder sx={{fontSize:20,color:'text.secondary'}} />}
+                                                        </IconButton>
+                                                    </Tooltip>
                                                     {!task.archived && (
-                                                        <button className="icon-button" onClick={(e) => { e.stopPropagation(); archiveTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }} title="Archive">
-                                                            <Archive sx={{fontSize:'18px',color:'var(--text-secondary)'}} />
-                                                        </button>
+                                                        <Tooltip title="Archive">
+                                                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); archiveTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }}>
+                                                                <Archive sx={{fontSize:18,color:'text.secondary'}} />
+                                                            </IconButton>
+                                                        </Tooltip>
                                                     )}
-                                                    <button className="icon-button delete-btn" onClick={(e) => { e.stopPropagation(); deleteTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }}>
-                                                        <Delete sx={{fontSize:'20px'}} />
-                                                    </button>
-                                                </div>
+                                                    <Tooltip title="Delete">
+                                                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); deleteTask(task._id || task.id); if (selectedTaskId === (task._id || task.id)) setSelectedTaskId(null); }}>
+                                                            <Delete sx={{fontSize:20}} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Stack>
                                             </motion.div>
                                         )
                                     })
@@ -901,12 +906,12 @@ function App() {
                                         </motion.div>
                                         <h3>Your plate is clear</h3>
                                         <p>Enjoy the peace, or start something new.</p>
-                                        <button className="create-first-btn" onClick={() => {
+                                        <Button variant="contained" onClick={() => {
                                             taskInputRef.current?.focus();
                                             taskInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                         }}>
                                             Create your first task
-                                        </button>
+                                        </Button>
                                     </div>
                                 )}
                             </AnimatePresence>
@@ -917,20 +922,22 @@ function App() {
 
             {/* Detail Panel */}
             {selectedTask && (
-                <aside className={`detail-panel glass ${selectedTaskId ? 'open' : ''}`}>
-                    <div className="detail-header">
-                        <span>Task Details</span>
-                        <button className="icon-button" onClick={() => setSelectedTaskId(null)}><ChevronRight sx={{fontSize:'20px'}} /></button>
-                    </div>
+                <Paper className={`detail-panel ${selectedTaskId ? 'open' : ''}`} sx={{ position:'fixed', top:0, right:0, width:380, height:'100vh', p:3, overflowY:'auto', zIndex:100, borderRadius:0 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                        <Typography variant="h6">Task Details</Typography>
+                        <IconButton onClick={() => setSelectedTaskId(null)}><ChevronRight /></IconButton>
+                    </Stack>
 
                     <div className="detail-content">
-                        <div className="detail-section">
-                            <input
-                                className="editable-title"
+                        <Box mb={2}>
+                            <TextField
+                                fullWidth
+                                variant="standard"
                                 value={selectedTask.title || ""}
                                 onChange={(e) => updateTaskState(selectedTask._id || selectedTask.id, { title: e.target.value })}
+                                InputProps={{ style: { fontSize: '1.3rem', fontWeight: 600 } }}
                             />
-                        </div>
+                        </Box>
 
                         <div className="detail-section">
                             <label><CalendarToday sx={{fontSize:'16px'}} /> Due Date & Time</label>
@@ -1160,219 +1167,159 @@ function App() {
                             />
                         </div>
                     </div>
-                </aside>
+                </Paper>
             )}
 
             {/* Delete List Modal */}
-            <AnimatePresence>
-                {listToDelete && (
-                    <div className="mobile-backdrop" style={{ zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setListToDelete(null)}>
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="glass list-delete-modal"
-                            style={{ padding: '32px', borderRadius: '24px', maxWidth: '400px', width: '90%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(255,100,100,0.2)' }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div style={{ background: 'rgba(255, 77, 79, 0.1)', padding: '16px', borderRadius: '50%', marginBottom: '20px' }}>
-                                <Delete sx={{fontSize:'40px',color:'#ff4d4f'}} />
-                            </div>
-                            <h3 style={{ marginBottom: '12px', fontSize: '1.5rem', fontWeight: '600' }}>Delete List?</h3>
-                            <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', lineHeight: '1.5' }}>Are you sure you want to delete this list and all of its tasks? This action <strong style={{ color: 'var(--text-primary)' }}>cannot be undone</strong>.</p>
-                            <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
-                                <button className="btn-cancel" onClick={() => setListToDelete(null)} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--glass-bg)', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: '500', transition: 'all 0.2s' }}>Cancel</button>
-                                <button className="btn-add" onClick={() => { deleteList(listToDelete); setListToDelete(null); }} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#ff4d4f', color: 'white', cursor: 'pointer', fontWeight: '600', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(255, 77, 79, 0.3)' }}>Yes, Delete</button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            <Dialog open={!!listToDelete} onClose={() => setListToDelete(null)} maxWidth="xs" fullWidth>
+                <DialogContent sx={{ textAlign: 'center', py: 4 }}>
+                    <Box sx={{ background: 'rgba(255, 77, 79, 0.1)', p: 2, borderRadius: '50%', display: 'inline-flex', mb: 2 }}>
+                        <Delete sx={{fontSize:40,color:'error.main'}} />
+                    </Box>
+                    <Typography variant="h5" fontWeight={600} mb={1}>Delete List?</Typography>
+                    <Typography color="text.secondary" mb={3}>Are you sure you want to delete this list and all of its tasks? This action <strong>cannot be undone</strong>.</Typography>
+                    <Stack direction="row" spacing={2}>
+                        <Button fullWidth variant="outlined" onClick={() => setListToDelete(null)}>Cancel</Button>
+                        <Button fullWidth variant="contained" color="error" onClick={() => { deleteList(listToDelete); setListToDelete(null); }}>Yes, Delete</Button>
+                    </Stack>
+                </DialogContent>
+            </Dialog>
 
             {/* Gamification Profile Modal */}
-            <AnimatePresence>
-                {isProfileOpen && user && (
-                    <div className="mobile-backdrop" style={{ zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setProfileOpen(false)}>
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="glass profile-modal"
-                            style={{ padding: '32px', borderRadius: '24px', maxWidth: '400px', width: '90%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
-                                <img src={user.picture || ''} alt="Avatar" style={{ width: '80px', height: '80px', borderRadius: '50%', border: '4px solid var(--primary)' }} />
-                                <div>
-                                    <h2 style={{ margin: 0, fontSize: '1.8rem', color: 'var(--text-primary)' }}>{user.name}</h2>
-                                    <span style={{ color: '#ff8c00', fontWeight: 'bold', fontSize: '1.2rem', textShadow: '0 2px 4px rgba(255,140,0,0.3)' }}>Level {user.level || 1}!</span>
-                                </div>
-                            </div>
+            <Dialog open={isProfileOpen && !!user} onClose={() => setProfileOpen(false)} maxWidth="xs" fullWidth>
+                {user && (
+                    <DialogContent sx={{ p: 4 }}>
+                        <Stack direction="row" alignItems="center" spacing={2} mb={4}>
+                            <img src={user.picture || ''} alt="Avatar" style={{ width: 80, height: 80, borderRadius: '50%', border: '4px solid var(--primary)' }} />
+                            <Box>
+                                <Typography variant="h4" fontWeight="bold">{user.name}</Typography>
+                                <Typography variant="h6" color="warning.main" fontWeight="bold">Level {user.level || 1}!</Typography>
+                            </Box>
+                        </Stack>
 
-                            <div style={{ marginBottom: '32px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                                    <span style={{ fontWeight: '600' }}>XP Progress</span>
-                                    <span>{user.xp || 0} / {(user.level || 1) * 100} XP</span>
-                                </div>
-                                <div style={{ background: 'var(--border-color)', height: '16px', borderRadius: '8px', overflow: 'hidden' }}>
-                                    <div style={{ background: 'linear-gradient(90deg, #ffd700, #ff8c00)', height: '100%', width: `${Math.min(((user.xp || 0) / ((user.level || 1) * 100)) * 100, 100)}%`, transition: 'width 0.5s ease-out' }}></div>
-                                </div>
-                            </div>
+                        <Box mb={3}>
+                            <Stack direction="row" justifyContent="space-between" mb={1}>
+                                <Typography variant="body2" fontWeight={600}>XP Progress</Typography>
+                                <Typography variant="body2">{user.xp || 0} / {(user.level || 1) * 100} XP</Typography>
+                            </Stack>
+                            <Box sx={{ background: 'var(--border-color)', height: 16, borderRadius: 2, overflow: 'hidden' }}>
+                                <Box sx={{ background: 'linear-gradient(90deg, #ffd700, #ff8c00)', height: '100%', width: `${Math.min(((user.xp || 0) / ((user.level || 1) * 100)) * 100, 100)}%`, transition: 'width 0.5s ease-out' }} />
+                            </Box>
+                        </Box>
 
-                            <div style={{ marginBottom: '40px' }}>
-                                <h4 style={{ marginBottom: '16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Star sx={{fontSize:'18px',color:'#ffd700'}} />
-                                    Achievements & Badges
-                                </h4>
-                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                    {user.badges && user.badges.length > 0 ? (
-                                        user.badges.map(b => (
-                                            <span key={b} style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,140,0,0.2))', color: '#ff8c00', padding: '8px 16px', borderRadius: '20px', fontSize: '0.9rem', fontWeight: 'bold', border: '1px solid rgba(255,140,0,0.3)' }}>{b}</span>
-                                        ))
-                                    ) : (
-                                        <div style={{ background: 'var(--glass-bg)', padding: '16px', borderRadius: '12px', width: '100%', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem', border: '1px dashed var(--border-color)' }}>
-                                            No badges yet. Keep crushing those tasks!
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                        <Box mb={4}>
+                            <Typography variant="h6" mb={2} display="flex" alignItems="center" gap={1}>
+                                <Star sx={{color:'#ffd700'}} /> Achievements & Badges
+                            </Typography>
+                            <Stack direction="row" flexWrap="wrap" gap={1}>
+                                {user.badges && user.badges.length > 0 ? (
+                                    user.badges.map(b => <Chip key={b} label={b} color="warning" variant="outlined" />)
+                                ) : (
+                                    <Paper sx={{ p: 2, width: '100%', textAlign: 'center' }}>
+                                        <Typography color="text.secondary" variant="body2">No badges yet. Keep crushing those tasks!</Typography>
+                                    </Paper>
+                                )}
+                            </Stack>
+                        </Box>
 
-                            <button onClick={logout} style={{ width: '100%', padding: '14px', borderRadius: '16px', background: 'var(--glass-bg)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', fontWeight: '600', transition: 'all 0.2s' }} className="logout-btn-full">
-                                <Logout sx={{fontSize:'18px'}} /> Logout of KTasks
-                            </button>
-                        </motion.div>
-                    </div>
+                        <Button fullWidth variant="outlined" onClick={logout} startIcon={<Logout />}>Logout of KTasks</Button>
+                    </DialogContent>
                 )}
-            </AnimatePresence>
+            </Dialog>
 
             {/* Calendar Day Tasks Modal */}
-            <AnimatePresence>
+            <Dialog open={!!calendarDayTasks} onClose={() => setCalendarDayTasks(null)} maxWidth="sm" fullWidth>
                 {calendarDayTasks && (
-                    <div className="mobile-backdrop" style={{ zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setCalendarDayTasks(null)}>
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="glass"
-                            style={{ padding: '24px', borderRadius: '24px', maxWidth: '450px', width: '90%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', maxHeight: '80vh', overflowY: 'auto' }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>{calendarDayTasks.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
-                                <button className="icon-button" onClick={() => setCalendarDayTasks(null)}><ChevronRight sx={{fontSize:'20px'}} className="rotate-90" /></button>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                {calendarDayTasks.tasks.map(task => (
-                                    <div
-                                        key={task._id || task.id}
-                                        onClick={() => { setSelectedTaskId(task._id || task.id); setCalendarDayTasks(null); }}
-                                        style={{
-                                            padding: '12px 16px',
-                                            borderRadius: '12px',
-                                            background: 'var(--glass-bg)',
-                                            border: '1px solid var(--border-color)',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '12px',
-                                            opacity: task.completed ? 0.6 : 1
-                                        }}
-                                    >
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); toggleTask(task._id || task.id); }}
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                                        >
-                                            {task.completed ? <CheckCircle sx={{fontSize:'22px',color:'var(--primary)'}} /> : <RadioButtonUnchecked sx={{fontSize:'22px',color:'var(--border-color)'}} />}
-                                        </button>
-                                        <div style={{ flex: 1 }}>
-                                            <span style={{ textDecoration: task.completed ? 'line-through' : 'none', color: 'var(--text-primary)', fontWeight: '500' }}>{task.title}</span>
-                                            {task.dueTime && <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginLeft: '8px' }}>{task.dueTime}</span>}
-                                        </div>
-                                        {task.priority !== 'low' && (
-                                            <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '10px', background: task.priority === 'high' ? 'rgba(255,77,79,0.15)' : 'rgba(255,140,0,0.15)', color: task.priority === 'high' ? '#ff4d4f' : '#ff8c00' }}>{task.priority}</span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </div>
+                    <DialogContent sx={{ maxHeight: '80vh', overflowY: 'auto' }}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                            <Typography variant="h6">{calendarDayTasks.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Typography>
+                            <IconButton onClick={() => setCalendarDayTasks(null)}><Close /></IconButton>
+                        </Stack>
+                        <Stack spacing={1}>
+                            {calendarDayTasks.tasks.map(task => (
+                                <Paper
+                                    key={task._id || task.id}
+                                    onClick={() => { setSelectedTaskId(task._id || task.id); setCalendarDayTasks(null); }}
+                                    sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', opacity: task.completed ? 0.6 : 1 }}
+                                >
+                                    <IconButton onClick={(e) => { e.stopPropagation(); toggleTask(task._id || task.id); }}>
+                                        {task.completed ? <CheckCircle sx={{color:'primary.main'}} /> : <RadioButtonUnchecked />}
+                                    </IconButton>
+                                    <Box flex={1}>
+                                        <Typography sx={{ textDecoration: task.completed ? 'line-through' : 'none', fontWeight: 500 }}>{task.title}</Typography>
+                                        {task.dueTime && <Typography variant="caption" color="text.secondary">{task.dueTime}</Typography>}
+                                    </Box>
+                                    {task.priority !== 'low' && (
+                                        <Chip label={task.priority} size="small" color={task.priority === 'high' ? 'error' : 'warning'} />
+                                    )}
+                                </Paper>
+                            ))}
+                        </Stack>
+                    </DialogContent>
                 )}
-            </AnimatePresence>
+            </Dialog>
 
             {/* Statistics Dashboard Modal */}
-            <AnimatePresence>
-                {statsOpen && (
-                    <div className="mobile-backdrop" style={{ zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setStatsOpen(false)}>
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="glass"
-                            style={{ padding: '32px', borderRadius: '24px', maxWidth: '480px', width: '90%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', maxHeight: '85vh', overflowY: 'auto' }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            {(() => {
-                                const stats = getStats();
-                                const maxCount = Math.max(...stats.weekData.map(d => d.count), 1);
-                                return (
-                                    <>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                            <h2 style={{ margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <BarChart sx={{fontSize:'28px',color:'var(--primary)'}} /> Statistics
-                                            </h2>
-                                            <button className="icon-button" onClick={() => setStatsOpen(false)}><Close sx={{fontSize:'24px'}} /></button>
-                                        </div>
+            <Dialog open={statsOpen} onClose={() => setStatsOpen(false)} maxWidth="sm" fullWidth>
+                <DialogContent sx={{ maxHeight: '85vh', overflowY: 'auto' }}>
+                    {(() => {
+                        const stats = getStats();
+                        const maxCount = Math.max(...stats.weekData.map(d => d.count), 1);
+                        return (
+                            <>
+                                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+                                    <Typography variant="h5" display="flex" alignItems="center" gap={1}>
+                                        <BarChart sx={{color:'primary.main'}} /> Statistics
+                                    </Typography>
+                                    <IconButton onClick={() => setStatsOpen(false)}><Close /></IconButton>
+                                </Stack>
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '24px' }}>
-                                            <div className="glass" style={{ padding: '16px', borderRadius: '16px', textAlign: 'center' }}>
-                                                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{stats.completed}</div>
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Completed</div>
-                                            </div>
-                                            <div className="glass" style={{ padding: '16px', borderRadius: '16px', textAlign: 'center' }}>
-                                                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{stats.total}</div>
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Tasks</div>
-                                            </div>
-                                            <div className="glass" style={{ padding: '16px', borderRadius: '16px', textAlign: 'center' }}>
-                                                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ff8c00' }}>{stats.completionRate}%</div>
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Completion Rate</div>
-                                            </div>
-                                            <div className="glass" style={{ padding: '16px', borderRadius: '16px', textAlign: 'center' }}>
-                                                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ff4d4f' }}>{stats.streak}</div>
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Day Streak</div>
-                                            </div>
-                                        </div>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5, mb: 3 }}>
+                                    <Paper sx={{ p: 2, textAlign: 'center' }}>
+                                        <Typography variant="h3" fontWeight="bold" color="primary">{stats.completed}</Typography>
+                                        <Typography variant="body2" color="text.secondary">Completed</Typography>
+                                    </Paper>
+                                    <Paper sx={{ p: 2, textAlign: 'center' }}>
+                                        <Typography variant="h3" fontWeight="bold" color="primary">{stats.total}</Typography>
+                                        <Typography variant="body2" color="text.secondary">Total Tasks</Typography>
+                                    </Paper>
+                                    <Paper sx={{ p: 2, textAlign: 'center' }}>
+                                        <Typography variant="h3" fontWeight="bold" color="warning.main">{stats.completionRate}%</Typography>
+                                        <Typography variant="body2" color="text.secondary">Completion Rate</Typography>
+                                    </Paper>
+                                    <Paper sx={{ p: 2, textAlign: 'center' }}>
+                                        <Typography variant="h3" fontWeight="bold" color="error.main">{stats.streak}</Typography>
+                                        <Typography variant="body2" color="text.secondary">Day Streak</Typography>
+                                    </Paper>
+                                </Box>
 
-                                        <div className="glass" style={{ padding: '16px', borderRadius: '16px', marginBottom: '20px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                                                <AccessTime sx={{fontSize:'18px',color:'var(--primary)'}} />
-                                                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Total Focus Time</span>
-                                            </div>
-                                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                                                {Math.floor(stats.totalFocus / 3600)}h {Math.floor((stats.totalFocus % 3600) / 60)}m
-                                            </div>
-                                        </div>
+                                <Paper sx={{ p: 2, mb: 2.5 }}>
+                                    <Stack direction="row" alignItems="center" gap={1} mb={1.5}>
+                                        <AccessTime sx={{color:'primary.main'}} />
+                                        <Typography fontWeight={600}>Total Focus Time</Typography>
+                                    </Stack>
+                                    <Typography variant="h4" fontWeight="bold">{Math.floor(stats.totalFocus / 3600)}h {Math.floor((stats.totalFocus % 3600) / 60)}m</Typography>
+                                </Paper>
 
-                                        <div className="glass" style={{ padding: '16px', borderRadius: '16px' }}>
-                                            <h4 style={{ margin: '0 0 16px 0', color: 'var(--text-primary)' }}>Last 7 Days</h4>
-                                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '120px' }}>
-                                                {stats.weekData.map((d, i) => (
-                                                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                                                        <div style={{ width: '100%', background: 'var(--border-color)', borderRadius: '6px', height: '100%', position: 'relative', overflow: 'hidden' }}>
-                                                            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${(d.count / maxCount) * 100}%`, background: 'linear-gradient(180deg, var(--primary), #6b8eff)', borderRadius: '6px', transition: 'height 0.5s ease-out', minHeight: d.count > 0 ? '4px' : 0 }} />
-                                                        </div>
-                                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{d.label}</span>
-                                                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{d.count}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </>
-                                );
-                            })()}
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                                <Paper sx={{ p: 2 }}>
+                                    <Typography variant="h6" mb={2}>Last 7 Days</Typography>
+                                    <Stack direction="row" alignItems="flex-end" gap={1} height={120}>
+                                        {stats.weekData.map((d, i) => (
+                                            <Box key={i} flex={1} display="flex" flexDirection="column" alignItems="center" gap={0.75}>
+                                                <Box sx={{ width: '100%', background: 'var(--border-color)', borderRadius: 1.5, height: '100%', position: 'relative', overflow: 'hidden' }}>
+                                                    <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${(d.count / maxCount) * 100}%`, background: 'linear-gradient(180deg, var(--primary), #6b8eff)', borderRadius: 1.5, transition: 'height 0.5s ease-out', minHeight: d.count > 0 ? '4px' : 0 }} />
+                                                </Box>
+                                                <Typography variant="caption" color="text.secondary">{d.label}</Typography>
+                                                <Typography variant="caption" fontWeight="bold">{d.count}</Typography>
+                                            </Box>
+                                        ))}
+                                    </Stack>
+                                </Paper>
+                            </>
+                        );
+                    })()}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
